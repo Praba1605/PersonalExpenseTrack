@@ -8,6 +8,9 @@ obj/
 .idea/
 *.swp
 
+# Claude Code session artifacts
+.claude/scheduled_tasks.lock
+
 # System files
 .DS_Store
 Thumbs.db
