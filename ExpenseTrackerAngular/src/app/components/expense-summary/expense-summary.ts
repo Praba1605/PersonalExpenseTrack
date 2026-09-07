@@ -11,25 +11,54 @@ import { Expense } from '../../models/expense.model';
 export class ExpenseSummary {
   @Input() expenses: Expense[] = [];
 
+  private today = new Date();
+  selectedYear = this.today.getFullYear();
+  selectedMonth = this.today.getMonth(); // 0-11
+
+  get isCurrentMonth(): boolean {
+    return this.selectedYear === this.today.getFullYear() && this.selectedMonth === this.today.getMonth();
+  }
+
+  get filteredExpenses(): Expense[] {
+    return this.expenses.filter((e) => {
+      const d = new Date(e.date);
+      return d.getFullYear() === this.selectedYear && d.getMonth() === this.selectedMonth;
+    });
+  }
+
   get monthlyTotal(): number {
-    const now = new Date();
-    return this.expenses
-      .filter((e) => {
-        const d = new Date(e.date);
-        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-      })
-      .reduce((sum, e) => sum + e.amount, 0);
+    return this.filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
   }
 
   get monthlyCount(): number {
-    const now = new Date();
-    return this.expenses.filter((e) => {
-      const d = new Date(e.date);
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    }).length;
+    return this.filteredExpenses.length;
   }
 
   get monthLabel(): string {
-    return new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+    return new Date(this.selectedYear, this.selectedMonth, 1).toLocaleString('default', {
+      month: 'long',
+      year: 'numeric',
+    });
+  }
+
+  previousMonth(): void {
+    this.selectedMonth--;
+    if (this.selectedMonth < 0) {
+      this.selectedMonth = 11;
+      this.selectedYear--;
+    }
+  }
+
+  nextMonth(): void {
+    this.selectedMonth++;
+    if (this.selectedMonth > 11) {
+      this.selectedMonth = 0;
+      this.selectedYear++;
+    }
+  }
+
+  resetToCurrentMonth(): void {
+    this.selectedYear = this.today.getFullYear();
+    this.selectedMonth = this.today.getMonth();
   }
 }
