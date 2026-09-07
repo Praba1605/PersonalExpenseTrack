@@ -1,0 +1,5 @@
+<div class="expense-summary">
+  <span class="label">{{ monthLabel }} total</span>
+  <span class="amount">{{ monthlyTotal | number: '1.2-2' }}</span>
+  <span class="count">({{ monthlyCount }} expense{{ monthlyCount === 1 ? '' : 's' }})</span>
+</div>

@@ -1,0 +1,44 @@
+<div class="expense-list">
+  <h2>Expenses</h2>
+
+  @if (loading) {
+    <p class="status">Loading expenses...</p>
+  } @else if (error) {
+    <p class="status error">{{ error }}</p>
+  } @else if (expenses.length === 0) {
+    <p class="status">No expenses yet. Add your first one above.</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Amount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (expense of expenses; track expense.id) {
+          <tr>
+            <td>{{ expense.date | date: 'mediumDate' }}</td>
+            <td>{{ expense.title }}</td>
+            <td>{{ expense.category }}</td>
+            <td>{{ expense.amount | number: '1.2-2' }}</td>
+            <td class="actions">
+              <button type="button" (click)="onEdit(expense)">Edit</button>
+              <button
+                type="button"
+                class="danger"
+                [disabled]="deletingId === expense.id"
+                (click)="onDelete(expense)"
+              >
+                {{ deletingId === expense.id ? 'Deleting...' : 'Delete' }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

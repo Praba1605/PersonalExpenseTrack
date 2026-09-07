@@ -1,0 +1,22 @@
+.app-shell {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: system-ui, sans-serif;
+}
+
+h1 {
+  margin-bottom: 1rem;
+}
+
+.layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.layout app-expense-list {
+  flex: 1;
+  min-width: 320px;
+}

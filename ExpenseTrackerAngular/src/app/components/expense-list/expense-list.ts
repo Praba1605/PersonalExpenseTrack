@@ -1,0 +1,62 @@
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ExpenseService } from '../../services/expense.service';
+import { Expense } from '../../models/expense.model';
+
+@Component({
+  selector: 'app-expense-list',
+  imports: [CommonModule],
+  templateUrl: './expense-list.html',
+  styleUrl: './expense-list.css',
+})
+export class ExpenseList implements OnInit {
+  @Output() edit = new EventEmitter<Expense>();
+  @Output() expensesLoaded = new EventEmitter<Expense[]>();
+
+  expenses: Expense[] = [];
+  loading = false;
+  error = '';
+  deletingId: number | null = null;
+
+  constructor(private expenseService: ExpenseService) {}
+
+  ngOnInit(): void {
+    this.refresh();
+  }
+
+  refresh(): void {
+    this.loading = true;
+    this.error = '';
+
+    this.expenseService.getExpenses().subscribe({
+      next: (data) => {
+        this.expenses = data;
+        this.loading = false;
+        this.expensesLoaded.emit(this.expenses);
+      },
+      error: () => {
+        this.loading = false;
+        this.error = 'Could not load expenses. Please try again.';
+      },
+    });
+  }
+
+  onEdit(expense: Expense): void {
+    this.edit.emit(expense);
+  }
+
+  onDelete(expense: Expense): void {
+    this.deletingId = expense.id;
+
+    this.expenseService.deleteExpense(expense.id).subscribe({
+      next: () => {
+        this.deletingId = null;
+        this.refresh();
+      },
+      error: () => {
+        this.deletingId = null;
+        this.error = 'Could not delete expense. Please try again.';
+      },
+    });
+  }
+}

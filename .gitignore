@@ -1,0 +1,13 @@
+# .NET (ExpenseTrackerApi)
+bin/
+obj/
+*.user
+
+# IDEs and editors
+.vs/
+.idea/
+*.swp
+
+# System files
+.DS_Store
+Thumbs.db

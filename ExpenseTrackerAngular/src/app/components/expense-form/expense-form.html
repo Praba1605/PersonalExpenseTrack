@@ -1,0 +1,59 @@
+<form class="expense-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+  <h2>{{ isEditMode ? 'Edit Expense' : 'Add Expense' }}</h2>
+
+  <div class="field">
+    <label for="title">Title</label>
+    <input id="title" type="text" formControlName="title" placeholder="e.g. Grocery shopping" />
+    @if (form.controls['title'].invalid && form.controls['title'].touched) {
+      <span class="field-error">
+        @if (form.controls['title'].errors?.['required']) { Title is required. }
+        @if (form.controls['title'].errors?.['maxlength']) { Title must be 100 characters or fewer. }
+      </span>
+    }
+  </div>
+
+  <div class="field">
+    <label for="amount">Amount</label>
+    <input id="amount" type="number" step="0.01" formControlName="amount" placeholder="0.00" />
+    @if (form.controls['amount'].invalid && form.controls['amount'].touched) {
+      <span class="field-error">Amount is required and must be greater than 0.</span>
+    }
+  </div>
+
+  <div class="field">
+    <label for="category">Category</label>
+    <select id="category" formControlName="category">
+      <option value="" disabled>Select a category</option>
+      @for (cat of categories; track cat) {
+        <option [value]="cat">{{ cat }}</option>
+      }
+    </select>
+    @if (form.controls['category'].invalid && form.controls['category'].touched) {
+      <span class="field-error">Category is required.</span>
+    }
+  </div>
+
+  <div class="field">
+    <label for="date">Date</label>
+    <input id="date" type="date" formControlName="date" />
+    @if (form.controls['date'].invalid && form.controls['date'].touched) {
+      <span class="field-error">
+        @if (form.controls['date'].errors?.['required']) { Date is required. }
+        @if (form.controls['date'].errors?.['futureDate']) { Date cannot be in the future. }
+      </span>
+    }
+  </div>
+
+  @if (error) {
+    <p class="form-error">{{ error }}</p>
+  }
+
+  <div class="actions">
+    <button type="submit" [disabled]="loading">
+      {{ loading ? 'Saving...' : (isEditMode ? 'Update Expense' : 'Add Expense') }}
+    </button>
+    @if (isEditMode) {
+      <button type="button" class="secondary" (click)="onCancel()">Cancel</button>
+    }
+  </div>
+</form>

@@ -1,0 +1,18 @@
+<main class="app-shell">
+  <h1>Personal Expense Tracker</h1>
+
+  <app-expense-summary [expenses]="allExpenses"></app-expense-summary>
+
+  <div class="layout">
+    <app-expense-form
+      [expenseToEdit]="editingExpense"
+      (saved)="onSaved()"
+      (cancelled)="onCancelled()"
+    ></app-expense-form>
+
+    <app-expense-list
+      (edit)="onEdit($event)"
+      (expensesLoaded)="onExpensesLoaded($event)"
+    ></app-expense-list>
+  </div>
+</main>
