@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense API Tester</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #F1F3EE;
+    --band: #E7EBE1;
+    --surface: #FFFFFF;
+    --surface-2: #FAFBF8;
+    --ink: #1D2620;
+    --ink-muted: #57645C;
+    --ink-faint: #8A968C;
+    --rule: #D3D9CC;
+
+    --accent: #3B3E82;
+    --accent-ink: #2C2E63;
+    --accent-soft: #E5E5F3;
+
+    --ok: #2F7D4F;
+    --ok-soft: #DFF0E4;
+    --warn: #A15F1F;
+    --warn-soft: #F5E7D6;
+    --danger: #A6332D;
+    --danger-soft: #F6DEDC;
+
+    --font-display: 'Archivo', 'Arial Narrow', sans-serif;
+    --font-body: 'Source Sans 3', 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Consolas', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141813;
+      --band: #1B211A;
+      --surface: #1C221B;
+      --surface-2: #191F18;
+      --ink: #E8ECE4;
+      --ink-muted: #9FAC9A;
+      --ink-faint: #6C786A;
+      --rule: #333E30;
+
+      --accent: #9497E6;
+      --accent-ink: #C4C6F2;
+      --accent-soft: #292C57;
+
+      --ok: #6FCB93;
+      --ok-soft: #1E3A28;
+      --warn: #E0A458;
+      --warn-soft: #3D2C15;
+      --danger: #E4837C;
+      --danger-soft: #3D1E1B;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  h1, h2, .eyebrow { font-family: var(--font-display); }
+  code, pre, .mono, input, textarea, select, button { font-family: var(--font-mono); }
+  button { font-family: var(--font-display); }
+
+  a { color: var(--accent-ink); }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .page {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  header.masthead {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 1.75rem;
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+  }
+
+  header.masthead h1 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  .origin-note {
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+  }
+  .origin-note code { color: var(--ink); }
+
+  /* ---------- Presets ---------- */
+
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .preset-btn {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .preset-btn:hover { background: var(--band); }
+
+  /* ---------- Request builder ---------- */
+
+  .builder {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1.3rem 1.4rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: stretch;
+  }
+
+  .method-group {
+    display: flex;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+    flex: 0 0 auto;
+  }
+
+  .method-btn {
+    background: var(--surface);
+    border: none;
+    border-right: 1px solid var(--rule);
+    padding: 0 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--ink-muted);
+    cursor: pointer;
+  }
+  .method-btn:last-child { border-right: none; }
+  .method-btn.active[data-m="GET"]    { background: var(--accent-soft); color: var(--accent-ink); }
+  .method-btn.active[data-m="POST"]   { background: var(--ok-soft);     color: var(--ok); }
+  .method-btn.active[data-m="PUT"]    { background: var(--warn-soft);   color: var(--warn); }
+  .method-btn.active[data-m="DELETE"] { background: var(--danger-soft); color: var(--danger); }
+
+  .url-line {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--surface-2);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 0 0.7rem;
+    font-size: 0.86rem;
+    color: var(--ink-faint);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .url-line .base { color: var(--ink-faint); }
+  .url-line input {
+    flex: 1 1 auto;
+    min-width: 120px;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    font-size: 0.86rem;
+    padding: 0.6rem 0.1rem;
+  }
+  .url-line input:focus { outline: none; }
+
+  .send-btn {
+    flex: 0 0 auto;
+    background: var(--accent);
+    color: var(--surface);
+    border: none;
+    border-radius: 6px;
+    padding: 0 1.3rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+  }
+  .send-btn:hover { background: var(--accent-ink); }
+  .send-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  textarea.body-field {
+    width: 100%;
+    margin-top: 0.75rem;
+    min-height: 132px;
+    resize: vertical;
+    background: var(--surface-2);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 0.7rem 0.85rem;
+    font-size: 0.86rem;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+
+  .field-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0.9rem 0 0.35rem;
+  }
+
+  /* ---------- Response ---------- */
+
+  .response-panel {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 1.3rem 1.4rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .response-head {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.8rem;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.3rem 0.7rem;
+    border-radius: 5px;
+  }
+  .status-pill.s2 { background: var(--ok-soft); color: var(--ok); }
+  .status-pill.s4 { background: var(--warn-soft); color: var(--warn); }
+  .status-pill.s5, .status-pill.serr { background: var(--danger-soft); color: var(--danger); }
+  .status-pill.idle { background: var(--band); color: var(--ink-faint); }
+
+  .response-meta {
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+  }
+
+  pre.response-body {
+    margin: 0;
+    background: var(--surface-2);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--ink);
+    min-height: 3rem;
+  }
+
+  .empty-hint {
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+
+  /* ---------- History ---------- */
+
+  .history-panel h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0 0 0.8rem;
+  }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 0.55rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.83rem;
+    text-align: left;
+    width: 100%;
+  }
+  .history-item:hover { background: var(--band); }
+
+  .history-item .m {
+    font-weight: 700;
+    font-size: 0.72rem;
+    width: 3.6rem;
+    flex: 0 0 auto;
+  }
+  .history-item .m.get { color: var(--accent-ink); }
+  .history-item .m.post { color: var(--ok); }
+  .history-item .m.put { color: var(--warn); }
+  .history-item .m.delete { color: var(--danger); }
+
+  .history-item .p {
+    flex: 1 1 auto;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .history-item .st {
+    flex: 0 0 auto;
+    font-weight: 700;
+    font-size: 0.78rem;
+  }
+  .history-item .st.ok { color: var(--ok); }
+  .history-item .st.warn { color: var(--warn); }
+  .history-item .st.err { color: var(--danger); }
+
+  .clear-history {
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-top: 0.6rem;
+    padding: 0;
+  }
+
+  @media (max-width: 640px) {
+    .row { flex-wrap: wrap; }
+    .method-group { width: 100%; }
+    .method-btn { flex: 1 1 auto; padding: 0.6rem 0; }
+    .url-line { width: 100%; order: 3; }
+    .send-btn { width: 100%; padding: 0.6rem 0; order: 4; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <span class="eyebrow">Expense Tracker &middot; Dev Tool</span>
+    <h1>API Tester</h1>
+    <p class="origin-note">
+      Served from this API itself at <code>localhost:5158</code>, so every request below is
+      same-origin &mdash; no CORS setup needed. This calls your <strong>real, running</strong>
+      backend and database.
+    </p>
+  </header>
+
+  <div class="presets" id="presets"></div>
+
+  <div class="builder">
+    <div class="row">
+      <div class="method-group" id="methodGroup">
+        <button class="method-btn active" data-m="GET">GET</button>
+        <button class="method-btn" data-m="POST">POST</button>
+        <button class="method-btn" data-m="PUT">PUT</button>
+        <button class="method-btn" data-m="DELETE">DELETE</button>
+      </div>
+      <div class="url-line">
+        <span class="base">/api/expenses</span>
+        <input type="text" id="pathInput" placeholder="e.g. /1 or ?category=Food" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="send-btn" id="sendBtn">Send</button>
+    </div>
+
+    <div id="bodyWrap" style="display:none;">
+      <p class="field-label">Request body (JSON)</p>
+      <textarea class="body-field" id="bodyInput" spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <div class="response-panel">
+    <div class="response-head">
+      <span class="status-pill idle" id="statusPill">No request sent yet</span>
+      <span class="response-meta" id="responseMeta"></span>
+    </div>
+    <pre class="response-body" id="responseBody"><span class="empty-hint">Pick a preset above, or set the method + path, then hit Send.</span></pre>
+  </div>
+
+  <div class="history-panel">
+    <h2>History</h2>
+    <div class="history-list" id="historyList"></div>
+    <button class="clear-history" id="clearHistory">Clear history</button>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  const baseUrl = window.location.origin + '/api/expenses';
+
+  const PRESETS = [
+    { label: 'List all', method: 'GET', path: '', body: '' },
+    { label: 'Filter: category=Food', method: 'GET', path: '?category=Food', body: '' },
+    { label: 'Filter: month=' + new Date().toISOString().slice(0, 7), method: 'GET', path: '?month=' + new Date().toISOString().slice(0, 7), body: '' },
+    { label: 'Get by id', method: 'GET', path: '/1', body: '' },
+    { label: 'Create', method: 'POST', path: '', body: JSON.stringify({
+        title: 'Coffee', amount: 4.5, category: 'Food', date: new Date().toISOString().slice(0, 10)
+      }, null, 2) },
+    { label: 'Update', method: 'PUT', path: '/1', body: JSON.stringify({
+        title: 'Coffee (updated)', amount: 5.0, category: 'Food', date: new Date().toISOString().slice(0, 10)
+      }, null, 2) },
+    { label: 'Delete', method: 'DELETE', path: '/1', body: '' },
+    { label: 'Invalid create (expect 400)', method: 'POST', path: '', body: JSON.stringify({
+        title: '', amount: 0, category: 'Bogus', date: '2099-01-01'
+      }, null, 2) },
+  ];
+
+  const methodGroup = document.getElementById('methodGroup');
+  const pathInput = document.getElementById('pathInput');
+  const bodyWrap = document.getElementById('bodyWrap');
+  const bodyInput = document.getElementById('bodyInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const statusPill = document.getElementById('statusPill');
+  const responseMeta = document.getElementById('responseMeta');
+  const responseBody = document.getElementById('responseBody');
+  const presetsEl = document.getElementById('presets');
+  const historyList = document.getElementById('historyList');
+  const clearHistoryBtn = document.getElementById('clearHistory');
+
+  let currentMethod = 'GET';
+  let history = [];
+
+  try {
+    const saved = localStorage.getItem('expenseApiTesterHistory');
+    if (saved) history = JSON.parse(saved);
+  } catch (e) { /* ignore unavailable storage */ }
+
+  function setMethod(m) {
+    currentMethod = m;
+    [...methodGroup.children].forEach(btn => btn.classList.toggle('active', btn.dataset.m === m));
+    bodyWrap.style.display = (m === 'POST' || m === 'PUT') ? 'block' : 'none';
+  }
+
+  methodGroup.addEventListener('click', (e) => {
+    const btn = e.target.closest('.method-btn');
+    if (btn) setMethod(btn.dataset.m);
+  });
+
+  presetsEl.innerHTML = PRESETS.map((p, i) =>
+    `<button class="preset-btn" data-i="${i}">${p.label}</button>`
+  ).join('');
+
+  presetsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.preset-btn');
+    if (!btn) return;
+    const p = PRESETS[Number(btn.dataset.i)];
+    setMethod(p.method);
+    pathInput.value = p.path;
+    bodyInput.value = p.body;
+  });
+
+  function renderHistory() {
+    if (history.length === 0) {
+      historyList.innerHTML = '<span class="empty-hint" style="font-size:0.85rem;">Nothing sent yet this session.</span>';
+      return;
+    }
+    historyList.innerHTML = history.map((h, i) => {
+      const cls = h.ok === null ? 'err' : (h.status < 300 ? 'ok' : (h.status < 500 ? 'warn' : 'err'));
+      const label = h.ok === null ? 'ERR' : h.status;
+      return `<button class="history-item" data-i="${i}">
+        <span class="m ${h.method.toLowerCase()}">${h.method}</span>
+        <span class="p">${h.path || '/'}</span>
+        <span class="st ${cls}">${label}</span>
+      </button>`;
+    }).join('');
+  }
+
+  historyList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.history-item');
+    if (!btn) return;
+    const h = history[Number(btn.dataset.i)];
+    setMethod(h.method);
+    pathInput.value = h.path;
+    bodyInput.value = h.body || '';
+    showResult(h);
+  });
+
+  clearHistoryBtn.addEventListener('click', () => {
+    history = [];
+    try { localStorage.removeItem('expenseApiTesterHistory'); } catch (e) {}
+    renderHistory();
+  });
+
+  function saveHistory() {
+    history = history.slice(0, 20);
+    try { localStorage.setItem('expenseApiTesterHistory', JSON.stringify(history)); } catch (e) {}
+    renderHistory();
+  }
+
+  function showResult(h) {
+    if (h.ok === null) {
+      statusPill.className = 'status-pill serr';
+      statusPill.textContent = 'Network error';
+      responseMeta.textContent = '';
+      responseBody.textContent = h.error;
+      return;
+    }
+    const cls = h.status < 300 ? 's2' : (h.status < 500 ? 's4' : 's5');
+    statusPill.className = 'status-pill ' + cls;
+    statusPill.textContent = h.status + ' ' + h.statusText;
+    responseMeta.textContent = h.method + ' ' + baseUrl + h.path + '  •  ' + h.durationMs + ' ms' + (h.location ? '  •  Location: ' + h.location : '');
+    responseBody.textContent = h.bodyText;
+  }
+
+  async function send() {
+    const path = pathInput.value.trim();
+    const method = currentMethod;
+    const url = baseUrl + path;
+    const hasBody = method === 'POST' || method === 'PUT';
+    const bodyText = hasBody ? bodyInput.value : '';
+
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+    statusPill.className = 'status-pill idle';
+    statusPill.textContent = 'Sending…';
+    responseMeta.textContent = '';
+    responseBody.textContent = '';
+
+    const started = performance.now();
+    let record;
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: hasBody ? { 'Content-Type': 'application/json' } : {},
+        body: hasBody ? bodyText : undefined,
+      });
+      const durationMs = Math.round(performance.now() - started);
+      const raw = await res.text();
+      let pretty = raw;
+      try { pretty = JSON.stringify(JSON.parse(raw), null, 2); } catch (e) { /* not JSON, show as-is */ }
+      if (!raw) pretty = '(empty body)';
+
+      record = {
+        method, path, body: bodyText,
+        ok: true, status: res.status, statusText: res.statusText,
+        durationMs, bodyText: pretty,
+        location: res.headers.get('Location') || '',
+      };
+    } catch (err) {
+      const durationMs = Math.round(performance.now() - started);
+      record = {
+        method, path, body: bodyText,
+        ok: null, durationMs,
+        error: 'Could not reach ' + url + '.\n\nIs the backend running? Start it with:\n  dotnet run\nfrom the ExpenseTrackerApi/ folder.\n\n(' + err + ')',
+      };
+    }
+
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send';
+    showResult(record);
+    history.unshift(record);
+    saveHistory();
+  }
+
+  sendBtn.addEventListener('click', send);
+  pathInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+
+  renderHistory();
+})();
+</script>
+</body>
+</html>
