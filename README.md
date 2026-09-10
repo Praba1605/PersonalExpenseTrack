@@ -112,3 +112,11 @@ and one of the fixed list, `Date` required and cannot be in the future.
 5. The result flows back up the same path: SQL Server → EF Core → the
    controller (maps to a response DTO, returns an HTTP status code) →
    Angular's `HttpClient` → the component updates its state.
+
+## Reference Artifacts
+
+- [Expense Ledger Reference](https://claude.ai/code/artifact/07fba5b0-6e62-4bf7-8c75-9b4349f43895) — API documentation: the `Expense` data model, all 5 endpoints with real request/response examples, and the status-code legend.
+- [Expense Request Flow](https://claude.ai/code/artifact/103d6b4e-8ba9-40f1-97d9-c008173543f3) — diagrams of how a request crosses from Angular to SQL Server and back, and the full create-expense decision path including both validation gates.
+
+Both are static references (no live data) and won't reflect changes unless
+manually republished.
