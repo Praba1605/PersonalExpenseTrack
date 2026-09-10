@@ -21,7 +21,7 @@
       <tbody>
         @for (expense of expenses; track expense.id) {
           <tr>
-            <td>{{ expense.date | date: 'mediumDate' }}</td>
+            <td>{{ formatDate(expense.date) }}</td>
             <td>{{ expense.title }}</td>
             <td>{{ expense.category }}</td>
             <td>{{ expense.amount | number: '1.2-2' }}</td>

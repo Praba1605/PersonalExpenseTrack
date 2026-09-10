@@ -19,5 +19,5 @@ public class UpdateExpenseDto
 
     [Required]
     [NotFutureDate]
-    public DateTime Date { get; set; }
+    public DateOnly Date { get; set; }
 }

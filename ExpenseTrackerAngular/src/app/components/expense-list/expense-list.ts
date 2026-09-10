@@ -3,6 +3,10 @@ import { CommonModule } from '@angular/common';
 import { ExpenseService } from '../../services/expense.service';
 import { Expense } from '../../models/expense.model';
 
+const MONTH_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
 @Component({
   selector: 'app-expense-list',
   imports: [CommonModule],
@@ -39,6 +43,15 @@ export class ExpenseList implements OnInit {
         this.error = 'Could not load expenses. Please try again.';
       },
     });
+  }
+
+  formatDate(dateStr: string): string {
+    // Format the "yyyy-MM-dd" string directly instead of going through Date/
+    // DatePipe — Angular's DatePipe mishandles date-only ISO strings even
+    // with an explicit UTC timezone, shifting the day back by the viewer's
+    // local UTC offset. Parsing the string ourselves sidesteps that entirely.
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return `${MONTH_NAMES[month - 1]} ${day}, ${year}`;
   }
 
   onEdit(expense: Expense): void {

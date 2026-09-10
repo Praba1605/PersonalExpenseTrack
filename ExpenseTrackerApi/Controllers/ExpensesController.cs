@@ -30,8 +30,9 @@ public class ExpensesController : ControllerBase
 
             if (!string.IsNullOrWhiteSpace(month) &&
                 DateTime.TryParseExact(month, "yyyy-MM", null,
-                    System.Globalization.DateTimeStyles.None, out var monthStart))
+                    System.Globalization.DateTimeStyles.None, out var monthStartDateTime))
             {
+                var monthStart = DateOnly.FromDateTime(monthStartDateTime);
                 var monthEnd = monthStart.AddMonths(1);
                 query = query.Where(e => e.Date >= monthStart && e.Date < monthEnd);
             }

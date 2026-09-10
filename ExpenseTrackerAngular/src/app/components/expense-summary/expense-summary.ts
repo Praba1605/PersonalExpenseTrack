@@ -20,9 +20,13 @@ export class ExpenseSummary {
   }
 
   get filteredExpenses(): Expense[] {
+    // Compare the "yyyy-MM-dd" string directly rather than parsing it into a
+    // Date — a date-only string parses as UTC midnight, which getFullYear()/
+    // getMonth() would then read back in the viewer's local timezone and can
+    // shift the day by one for anyone behind UTC.
     return this.expenses.filter((e) => {
-      const d = new Date(e.date);
-      return d.getFullYear() === this.selectedYear && d.getMonth() === this.selectedMonth;
+      const [year, month] = e.date.split('-').map(Number);
+      return year === this.selectedYear && month - 1 === this.selectedMonth;
     });
   }
 

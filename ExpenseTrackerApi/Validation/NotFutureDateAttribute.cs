@@ -11,9 +11,9 @@ public class NotFutureDateAttribute : ValidationAttribute
 
     public override bool IsValid(object? value)
     {
-        if (value is not DateTime date)
+        if (value is not DateOnly date)
             return true; // let [Required] handle missing values
 
-        return date.Date <= DateTime.UtcNow.Date;
+        return date <= DateOnly.FromDateTime(DateTime.UtcNow);
     }
 }
