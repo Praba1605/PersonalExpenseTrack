@@ -14,6 +14,10 @@ public class NotFutureDateAttribute : ValidationAttribute
         if (value is not DateOnly date)
             return true; // let [Required] handle missing values
 
-        return date <= DateOnly.FromDateTime(DateTime.UtcNow);
+        // This app runs entirely on one machine (browser, API, and DB share a
+        // timezone), so "today" should match the local clock the user's date
+        // picker uses -- not UTC, which drifts from local "today" for part of
+        // every day and would reject a date the client just accepted.
+        return date <= DateOnly.FromDateTime(DateTime.Now);
     }
 }
