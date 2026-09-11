@@ -1,0 +1,150 @@
+{
+  "info": {
+    "name": "Expense Tracker API",
+    "description": "All 5 endpoints of the Expense Tracker backend (ExpenseTrackerApi). Requires the backend running locally: dotnet run from ExpenseTrackerApi/, listening on http://localhost:5158.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5158/api",
+      "type": "string"
+    },
+    {
+      "key": "expenseId",
+      "value": "1",
+      "type": "string",
+      "description": "Set this to a real id from a List Expenses response before using Get/Update/Delete by id."
+    }
+  ],
+  "item": [
+    {
+      "name": "List Expenses",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/expenses",
+          "host": ["{{baseUrl}}"],
+          "path": ["expenses"]
+        },
+        "description": "Lists all expenses, most recent first."
+      }
+    },
+    {
+      "name": "List Expenses - Filter by Category",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/expenses?category=Food",
+          "host": ["{{baseUrl}}"],
+          "path": ["expenses"],
+          "query": [
+            { "key": "category", "value": "Food" }
+          ]
+        },
+        "description": "category must be one of: Food, Travel, Bills, Shopping, Other."
+      }
+    },
+    {
+      "name": "List Expenses - Filter by Month",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/expenses?month=2026-09",
+          "host": ["{{baseUrl}}"],
+          "path": ["expenses"],
+          "query": [
+            { "key": "month", "value": "2026-09" }
+          ]
+        },
+        "description": "month uses YYYY-MM format. Combines with category via AND if both are set."
+      }
+    },
+    {
+      "name": "Get Expense by Id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/expenses/{{expenseId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["expenses", "{{expenseId}}"]
+        },
+        "description": "Returns 404 if no expense exists with this id."
+      }
+    },
+    {
+      "name": "Create Expense",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Grocery Shopping\",\n  \"amount\": 45.50,\n  \"category\": \"Food\",\n  \"date\": \"2026-09-05\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/expenses",
+          "host": ["{{baseUrl}}"],
+          "path": ["expenses"]
+        },
+        "description": "Returns 201 with the created expense and a Location header pointing at Get Expense by Id."
+      }
+    },
+    {
+      "name": "Create Expense - Invalid (expect 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"\",\n  \"amount\": 0,\n  \"category\": \"Bogus\",\n  \"date\": \"2099-01-01\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/expenses",
+          "host": ["{{baseUrl}}"],
+          "path": ["expenses"]
+        },
+        "description": "Empty title, zero amount, unknown category, future date -- exercises all four validation rules at once. Expect 400 with one message per field."
+      }
+    },
+    {
+      "name": "Update Expense",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Grocery Shopping (updated)\",\n  \"amount\": 52.00,\n  \"category\": \"Food\",\n  \"date\": \"2026-09-05\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/expenses/{{expenseId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["expenses", "{{expenseId}}"]
+        },
+        "description": "Same validation rules as Create. Returns 404 if the id doesn't exist."
+      }
+    },
+    {
+      "name": "Delete Expense",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/expenses/{{expenseId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["expenses", "{{expenseId}}"]
+        },
+        "description": "Returns 200 with an empty body. Returns 404 if already deleted or never existed."
+      }
+    }
+  ]
+}
