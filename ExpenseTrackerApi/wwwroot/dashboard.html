@@ -17,11 +17,7 @@
     --baseline:       #c3c2b7;
     --border:         rgba(11,11,11,0.10);
 
-    --series-1: #2a78d6; /* blue    -- Food */
-    --series-2: #eb6834; /* orange  -- Travel */
-    --series-3: #1baf7a; /* aqua    -- Bills */
-    --series-4: #eda100; /* yellow  -- Shopping */
-    --series-5: #e87ba4; /* magenta -- Other */
+    --accent: #0d9488; /* teal -- single accent for both charts */
 
     --danger: #d03b3b;
 
@@ -40,11 +36,7 @@
       --baseline:       #383835;
       --border:         rgba(255,255,255,0.10);
 
-      --series-1: #3987e5;
-      --series-2: #d95926;
-      --series-3: #199e70;
-      --series-4: #c98500;
-      --series-5: #d55181;
+      --accent: #2dd4bf; /* lighter teal for contrast on dark surface */
 
       --danger: #e66767;
     }
@@ -278,7 +270,6 @@
   const API_URL = window.location.origin + '/api/expenses';
   const POLL_INTERVAL_MS = 3000;
   const CATEGORIES = ['Food', 'Travel', 'Bills', 'Shopping', 'Other'];
-  const CATEGORY_COLORS = ['--series-1', '--series-2', '--series-3', '--series-4', '--series-5'];
   const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   const loadingPanel = document.getElementById('loadingPanel');
@@ -387,7 +378,6 @@
 
   function buildCategoryChart(values) {
     const ctx = document.getElementById('categoryChart');
-    const colors = CATEGORY_COLORS.map((v) => cssVar(v));
 
     return new Chart(ctx, {
       type: 'bar',
@@ -395,7 +385,7 @@
         labels: CATEGORIES,
         datasets: [{
           data: values,
-          backgroundColor: colors,
+          backgroundColor: cssVar('--accent'),
           borderRadius: 4,
           borderSkipped: false,
           maxBarThickness: 56,
@@ -431,7 +421,7 @@
 
   function buildMonthChart(labels, values) {
     const ctx = document.getElementById('monthChart');
-    const lineColor = cssVar('--series-1');
+    const lineColor = cssVar('--accent');
 
     return new Chart(ctx, {
       type: 'line',
