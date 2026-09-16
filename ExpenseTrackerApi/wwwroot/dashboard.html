@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:      #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+
+    --series-1: #2a78d6; /* blue    -- Food */
+    --series-2: #eb6834; /* orange  -- Travel */
+    --series-3: #1baf7a; /* aqua    -- Bills */
+    --series-4: #eda100; /* yellow  -- Shopping */
+    --series-5: #e87ba4; /* magenta -- Other */
+
+    --danger: #d03b3b;
+
+    --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:      #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+      --series-4: #c98500;
+      --series-5: #d55181;
+
+      --danger: #e66767;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0.3rem 0 0;
+  }
+
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .refresh-btn {
+    background: var(--series-1);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.55rem 1.1rem;
+    font-family: var(--font);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .refresh-btn:hover { opacity: 0.9; }
+  .refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .updated-at {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .state-panel {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: var(--text-secondary);
+  }
+
+  .state-panel.error {
+    color: var(--danger);
+  }
+
+  .state-panel .hint {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .charts {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 800px) {
+    .charts { grid-template-columns: 1fr 1fr; }
+  }
+
+  .chart-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.25rem 1rem;
+  }
+
+  .chart-card h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 0.9rem;
+    color: var(--text-primary);
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 280px;
+  }
+
+  .stale-banner {
+    font-size: 0.8rem;
+    color: var(--danger);
+    margin-top: 0.8rem;
+    display: none;
+  }
+  .stale-banner.visible { display: block; }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div>
+      <span class="eyebrow">Expense Tracker</span>
+      <h1>Spending Dashboard</h1>
+    </div>
+    <div class="status-row">
+      <span id="updatedAt" class="updated-at"></span>
+      <button id="refreshBtn" class="refresh-btn" type="button">Refresh</button>
+    </div>
+  </header>
+
+  <div id="loadingPanel" class="state-panel">
+    Loading...
+  </div>
+
+  <div id="errorPanel" class="state-panel error" hidden>
+    <span id="errorMessage">Could not load expense data.</span>
+    <span class="hint">Is the backend running? Start it with <code>dotnet run</code> from ExpenseTrackerApi/.</span>
+  </div>
+
+  <div id="chartsPanel" class="charts" hidden>
+    <div class="chart-card">
+      <h2>Total spending by category</h2>
+      <div class="chart-wrap"><canvas id="categoryChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h2>Total spending by month</h2>
+      <div class="chart-wrap"><canvas id="monthChart"></canvas></div>
+    </div>
+  </div>
+
+  <div id="staleBanner" class="stale-banner">Could not refresh just now — showing the last data that loaded.</div>
+
+</div>
+
+<script>
+(function () {
+  const API_URL = window.location.origin + '/api/expenses';
+  const POLL_INTERVAL_MS = 10000;
+  const CATEGORIES = ['Food', 'Travel', 'Bills', 'Shopping', 'Other'];
+  const CATEGORY_COLORS = ['--series-1', '--series-2', '--series-3', '--series-4', '--series-5'];
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const loadingPanel = document.getElementById('loadingPanel');
+  const errorPanel = document.getElementById('errorPanel');
+  const errorMessage = document.getElementById('errorMessage');
+  const chartsPanel = document.getElementById('chartsPanel');
+  const staleBanner = document.getElementById('staleBanner');
+  const updatedAtEl = document.getElementById('updatedAt');
+  const refreshBtn = document.getElementById('refreshBtn');
+
+  const style = getComputedStyle(document.documentElement);
+  const cssVar = (name) => style.getPropertyValue(name).trim();
+
+  let hasLoadedOnce = false;
+  let categoryChart = null;
+  let monthChart = null;
+
+  function computeCategoryTotals(expenses) {
+    const totals = Object.fromEntries(CATEGORIES.map((c) => [c, 0]));
+    for (const e of expenses) {
+      if (totals[e.category] !== undefined) {
+        totals[e.category] += e.amount;
+      }
+    }
+    return CATEGORIES.map((c) => totals[c]);
+  }
+
+  function computeMonthTotals(expenses) {
+    const totals = new Map();
+    for (const e of expenses) {
+      const key = e.date.slice(0, 7); // "yyyy-MM"
+      totals.set(key, (totals.get(key) || 0) + e.amount);
+    }
+    const keys = [...totals.keys()].sort();
+    const labels = keys.map((k) => {
+      const [y, m] = k.split('-').map(Number);
+      return `${MONTH_NAMES[m - 1]} ${y}`;
+    });
+    const values = keys.map((k) => totals.get(k));
+    return { labels, values };
+  }
+
+  function buildCategoryChart(values) {
+    const ctx = document.getElementById('categoryChart');
+    const colors = CATEGORY_COLORS.map((v) => cssVar(v));
+
+    return new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: CATEGORIES,
+        datasets: [{
+          data: values,
+          backgroundColor: colors,
+          borderRadius: 4,
+          borderSkipped: false,
+          maxBarThickness: 56,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (item) => ' ' + item.parsed.y.toLocaleString(undefined, { style: 'currency', currency: 'USD' }),
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            border: { color: cssVar('--baseline') },
+            ticks: { color: cssVar('--text-secondary'), font: { family: 'system-ui' } },
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: cssVar('--gridline') },
+            border: { display: false },
+            ticks: { color: cssVar('--text-muted'), font: { family: 'system-ui' } },
+          },
+        },
+      },
+    });
+  }
+
+  function buildMonthChart(labels, values) {
+    const ctx = document.getElementById('monthChart');
+    const lineColor = cssVar('--series-1');
+
+    return new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          borderColor: lineColor,
+          backgroundColor: lineColor,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0,
+          fill: false,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (item) => ' ' + item.parsed.y.toLocaleString(undefined, { style: 'currency', currency: 'USD' }),
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            border: { color: cssVar('--baseline') },
+            ticks: { color: cssVar('--text-secondary'), font: { family: 'system-ui' } },
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: cssVar('--gridline') },
+            border: { display: false },
+            ticks: { color: cssVar('--text-muted'), font: { family: 'system-ui' } },
+          },
+        },
+      },
+    });
+  }
+
+  function renderCharts(expenses) {
+    const categoryValues = computeCategoryTotals(expenses);
+    const { labels: monthLabels, values: monthValues } = computeMonthTotals(expenses);
+
+    if (!categoryChart) {
+      categoryChart = buildCategoryChart(categoryValues);
+      monthChart = buildMonthChart(monthLabels, monthValues);
+      return;
+    }
+
+    categoryChart.data.datasets[0].data = categoryValues;
+    categoryChart.update();
+
+    monthChart.data.labels = monthLabels;
+    monthChart.data.datasets[0].data = monthValues;
+    monthChart.update();
+  }
+
+  function setUpdatedAt() {
+    const now = new Date();
+    updatedAtEl.textContent = 'Updated ' + now.toLocaleTimeString();
+  }
+
+  async function load({ silent }) {
+    if (!silent) {
+      loadingPanel.hidden = hasLoadedOnce;
+      errorPanel.hidden = true;
+      refreshBtn.disabled = true;
+    }
+
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const expenses = await res.json();
+
+      renderCharts(expenses);
+      setUpdatedAt();
+      staleBanner.classList.remove('visible');
+
+      loadingPanel.hidden = true;
+      errorPanel.hidden = true;
+      chartsPanel.hidden = false;
+      hasLoadedOnce = true;
+    } catch (err) {
+      if (hasLoadedOnce) {
+        // Keep showing the last good charts; just flag that this refresh
+        // didn't come through, rather than tearing down the view.
+        staleBanner.classList.add('visible');
+      } else {
+        loadingPanel.hidden = true;
+        chartsPanel.hidden = true;
+        errorPanel.hidden = false;
+        errorMessage.textContent = 'Could not load expense data (' + err.message + ').';
+      }
+    } finally {
+      refreshBtn.disabled = false;
+    }
+  }
+
+  refreshBtn.addEventListener('click', () => load({ silent: false }));
+
+  load({ silent: false });
+  setInterval(() => load({ silent: true }), POLL_INTERVAL_MS);
+})();
+</script>
+</body>
+</html>
