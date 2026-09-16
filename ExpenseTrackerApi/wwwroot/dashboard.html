@@ -90,8 +90,22 @@
     color: var(--text-muted);
   }
 
-  .updated-at {
-    font-variant-numeric: tabular-nums;
+  .live-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+    animation: live-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes live-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .live-indicator { animation: none; }
   }
 
   .state-panel {
@@ -215,7 +229,8 @@
       <h1>Spending Dashboard</h1>
     </div>
     <div class="status-row">
-      <span id="updatedAt" class="updated-at"></span>
+      <span class="live-indicator" aria-hidden="true"></span>
+      <span>Live dashboard</span>
     </div>
   </header>
 
@@ -277,7 +292,6 @@
   const errorMessage = document.getElementById('errorMessage');
   const contentPanel = document.getElementById('contentPanel');
   const staleBanner = document.getElementById('staleBanner');
-  const updatedAtEl = document.getElementById('updatedAt');
 
   const metricTotalEl = document.getElementById('metricTotal');
   const metricThisMonthEl = document.getElementById('metricThisMonth');
@@ -490,11 +504,6 @@
     monthChart.update();
   }
 
-  function setUpdatedAt() {
-    const now = new Date();
-    updatedAtEl.textContent = 'Updated ' + now.toLocaleTimeString();
-  }
-
   async function load({ silent }) {
     if (!silent) {
       loadingPanel.hidden = hasLoadedOnce;
@@ -507,7 +516,6 @@
       const expenses = await res.json();
 
       render(expenses);
-      setUpdatedAt();
       staleBanner.classList.remove('visible');
 
       loadingPanel.hidden = true;
