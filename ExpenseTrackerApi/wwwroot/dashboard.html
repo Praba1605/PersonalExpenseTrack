@@ -98,20 +98,6 @@
     color: var(--text-muted);
   }
 
-  .refresh-btn {
-    background: var(--series-1);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 0.55rem 1.1rem;
-    font-family: var(--font);
-    font-size: 0.88rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .refresh-btn:hover { opacity: 0.9; }
-  .refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
   .updated-at {
     font-variant-numeric: tabular-nums;
   }
@@ -238,7 +224,6 @@
     </div>
     <div class="status-row">
       <span id="updatedAt" class="updated-at"></span>
-      <button id="refreshBtn" class="refresh-btn" type="button">Refresh</button>
     </div>
   </header>
 
@@ -302,7 +287,6 @@
   const contentPanel = document.getElementById('contentPanel');
   const staleBanner = document.getElementById('staleBanner');
   const updatedAtEl = document.getElementById('updatedAt');
-  const refreshBtn = document.getElementById('refreshBtn');
 
   const metricTotalEl = document.getElementById('metricTotal');
   const metricThisMonthEl = document.getElementById('metricThisMonth');
@@ -525,7 +509,6 @@
     if (!silent) {
       loadingPanel.hidden = hasLoadedOnce;
       errorPanel.hidden = true;
-      refreshBtn.disabled = true;
     }
 
     try {
@@ -552,12 +535,9 @@
         errorPanel.hidden = false;
         errorMessage.textContent = 'Could not load expense data (' + err.message + ').';
       }
-    } finally {
-      refreshBtn.disabled = false;
     }
   }
 
-  refreshBtn.addEventListener('click', () => load({ silent: false }));
   monthSelect.addEventListener('change', () => {
     selectedPeriod = monthSelect.value;
     updatePeriodMetrics();
