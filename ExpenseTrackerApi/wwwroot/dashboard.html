@@ -62,7 +62,7 @@
   }
 
   .page {
-    max-width: 1000px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 2rem 1.5rem 4rem;
   }
@@ -136,14 +136,47 @@
     color: var(--text-muted);
   }
 
-  .charts {
-    display: grid;
-    grid-template-columns: 1fr;
+  .content {
+    display: flex;
+    flex-direction: column;
     gap: 1.5rem;
   }
 
-  @media (min-width: 800px) {
-    .charts { grid-template-columns: 1fr 1fr; }
+  /* ---------- Metric cards ---------- */
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+  }
+
+  .metric-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+  }
+
+  .metric-card .label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 0 0.4rem;
+  }
+
+  .metric-card .value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Chart cards ---------- */
+
+  .charts {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
   }
 
   .chart-card {
@@ -162,7 +195,7 @@
 
   .chart-wrap {
     position: relative;
-    height: 280px;
+    height: 260px;
   }
 
   .stale-banner {
@@ -199,15 +232,34 @@
     <span class="hint">Is the backend running? Start it with <code>dotnet run</code> from ExpenseTrackerApi/.</span>
   </div>
 
-  <div id="chartsPanel" class="charts" hidden>
-    <div class="chart-card">
-      <h2>Total spending by category</h2>
-      <div class="chart-wrap"><canvas id="categoryChart"></canvas></div>
+  <div id="contentPanel" class="content" hidden>
+
+    <div class="metrics">
+      <div class="metric-card">
+        <p class="label">Total spent</p>
+        <p class="value" id="metricTotal">–</p>
+      </div>
+      <div class="metric-card">
+        <p class="label">This month</p>
+        <p class="value" id="metricThisMonth">–</p>
+      </div>
+      <div class="metric-card">
+        <p class="label">Expenses</p>
+        <p class="value" id="metricCount">–</p>
+      </div>
     </div>
-    <div class="chart-card">
-      <h2>Total spending by month</h2>
-      <div class="chart-wrap"><canvas id="monthChart"></canvas></div>
+
+    <div class="charts">
+      <div class="chart-card">
+        <h2>Spending by category</h2>
+        <div class="chart-wrap"><canvas id="categoryChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h2>Spending by month</h2>
+        <div class="chart-wrap"><canvas id="monthChart"></canvas></div>
+      </div>
     </div>
+
   </div>
 
   <div id="staleBanner" class="stale-banner">Could not refresh just now — showing the last data that loaded.</div>
@@ -225,13 +277,18 @@
   const loadingPanel = document.getElementById('loadingPanel');
   const errorPanel = document.getElementById('errorPanel');
   const errorMessage = document.getElementById('errorMessage');
-  const chartsPanel = document.getElementById('chartsPanel');
+  const contentPanel = document.getElementById('contentPanel');
   const staleBanner = document.getElementById('staleBanner');
   const updatedAtEl = document.getElementById('updatedAt');
   const refreshBtn = document.getElementById('refreshBtn');
 
+  const metricTotalEl = document.getElementById('metricTotal');
+  const metricThisMonthEl = document.getElementById('metricThisMonth');
+  const metricCountEl = document.getElementById('metricCount');
+
   const style = getComputedStyle(document.documentElement);
   const cssVar = (name) => style.getPropertyValue(name).trim();
+  const currency = (n) => n.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
 
   let hasLoadedOnce = false;
   let categoryChart = null;
@@ -262,6 +319,22 @@
     return { labels, values };
   }
 
+  function computeMetrics(expenses) {
+    const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+    // Compare "yyyy-MM" strings directly rather than parsing into a Date --
+    // a date-only string parses as UTC midnight, and reading it back with
+    // local getters can shift the month for anyone ahead of UTC. Same fix
+    // already applied in the Angular app's expense-summary component.
+    const now = new Date();
+    const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const thisMonth = expenses
+      .filter((e) => e.date.slice(0, 7) === currentYearMonth)
+      .reduce((sum, e) => sum + e.amount, 0);
+
+    return { total, thisMonth, count: expenses.length };
+  }
+
   function buildCategoryChart(values) {
     const ctx = document.getElementById('categoryChart');
     const colors = CATEGORY_COLORS.map((v) => cssVar(v));
@@ -285,7 +358,7 @@
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (item) => ' ' + item.parsed.y.toLocaleString(undefined, { style: 'currency', currency: 'USD' }),
+              label: (item) => ' ' + currency(item.parsed.y),
             },
           },
         },
@@ -332,7 +405,7 @@
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (item) => ' ' + item.parsed.y.toLocaleString(undefined, { style: 'currency', currency: 'USD' }),
+              label: (item) => ' ' + currency(item.parsed.y),
             },
           },
         },
@@ -353,7 +426,12 @@
     });
   }
 
-  function renderCharts(expenses) {
+  function render(expenses) {
+    const metrics = computeMetrics(expenses);
+    metricTotalEl.textContent = currency(metrics.total);
+    metricThisMonthEl.textContent = currency(metrics.thisMonth);
+    metricCountEl.textContent = metrics.count.toLocaleString();
+
     const categoryValues = computeCategoryTotals(expenses);
     const { labels: monthLabels, values: monthValues } = computeMonthTotals(expenses);
 
@@ -388,22 +466,22 @@
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const expenses = await res.json();
 
-      renderCharts(expenses);
+      render(expenses);
       setUpdatedAt();
       staleBanner.classList.remove('visible');
 
       loadingPanel.hidden = true;
       errorPanel.hidden = true;
-      chartsPanel.hidden = false;
+      contentPanel.hidden = false;
       hasLoadedOnce = true;
     } catch (err) {
       if (hasLoadedOnce) {
-        // Keep showing the last good charts; just flag that this refresh
-        // didn't come through, rather than tearing down the view.
+        // Keep showing the last good view; just flag that this refresh
+        // didn't come through, rather than tearing down the charts/metrics.
         staleBanner.classList.add('visible');
       } else {
         loadingPanel.hidden = true;
-        chartsPanel.hidden = true;
+        contentPanel.hidden = true;
         errorPanel.hidden = false;
         errorMessage.textContent = 'Could not load expense data (' + err.message + ').';
       }
