@@ -157,11 +157,30 @@
     padding: 1.1rem 1.25rem;
   }
 
+  .metric-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: 0 0 0.4rem;
+  }
+
   .metric-card .label {
     font-size: 0.78rem;
     font-weight: 600;
     color: var(--text-secondary);
-    margin: 0 0 0.4rem;
+    margin: 0;
+  }
+
+  .month-select {
+    font-family: var(--font);
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    background: var(--page-plane);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.15rem 0.35rem;
+    max-width: 7.5rem;
   }
 
   .metric-card .value {
@@ -240,7 +259,10 @@
         <p class="value" id="metricTotal">–</p>
       </div>
       <div class="metric-card">
-        <p class="label">This month</p>
+        <div class="metric-head">
+          <p class="label">This month</p>
+          <select id="monthSelect" class="month-select" aria-label="Month to show"></select>
+        </div>
         <p class="value" id="metricThisMonth">–</p>
       </div>
       <div class="metric-card">
@@ -269,7 +291,7 @@
 <script>
 (function () {
   const API_URL = window.location.origin + '/api/expenses';
-  const POLL_INTERVAL_MS = 10000;
+  const POLL_INTERVAL_MS = 3000;
   const CATEGORIES = ['Food', 'Travel', 'Bills', 'Shopping', 'Other'];
   const CATEGORY_COLORS = ['--series-1', '--series-2', '--series-3', '--series-4', '--series-5'];
   const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -285,6 +307,7 @@
   const metricTotalEl = document.getElementById('metricTotal');
   const metricThisMonthEl = document.getElementById('metricThisMonth');
   const metricCountEl = document.getElementById('metricCount');
+  const monthSelect = document.getElementById('monthSelect');
 
   const style = getComputedStyle(document.documentElement);
   const cssVar = (name) => style.getPropertyValue(name).trim();
@@ -293,6 +316,8 @@
   let hasLoadedOnce = false;
   let categoryChart = null;
   let monthChart = null;
+  let lastExpenses = [];
+  let selectedPeriod = null; // 'all' or 'yyyy-MM'; null = not yet initialized
 
   function computeCategoryTotals(expenses) {
     const totals = Object.fromEntries(CATEGORIES.map((c) => [c, 0]));
@@ -319,20 +344,61 @@
     return { labels, values };
   }
 
-  function computeMetrics(expenses) {
-    const total = expenses.reduce((sum, e) => sum + e.amount, 0);
-
-    // Compare "yyyy-MM" strings directly rather than parsing into a Date --
-    // a date-only string parses as UTC midnight, and reading it back with
-    // local getters can shift the month for anyone ahead of UTC. Same fix
-    // already applied in the Angular app's expense-summary component.
+  // Compare "yyyy-MM" strings directly rather than parsing into a Date --
+  // a date-only string parses as UTC midnight, and reading it back with
+  // local getters can shift the month for anyone ahead of UTC. Same fix
+  // already applied in the Angular app's expense-summary component.
+  function getCurrentYearMonth() {
     const now = new Date();
-    const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const thisMonth = expenses
-      .filter((e) => e.date.slice(0, 7) === currentYearMonth)
-      .reduce((sum, e) => sum + e.amount, 0);
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
 
-    return { total, thisMonth, count: expenses.length };
+  function monthOptionLabel(yearMonth) {
+    const [y, m] = yearMonth.split('-').map(Number);
+    return `${MONTH_NAMES[m - 1]} ${y}`;
+  }
+
+  // Always includes the real current month, even if it has no expenses yet,
+  // so "this month" stays a sensible default rather than disappearing.
+  function getAvailableMonths(expenses) {
+    const set = new Set(expenses.map((e) => e.date.slice(0, 7)));
+    set.add(getCurrentYearMonth());
+    return [...set].sort();
+  }
+
+  function populateMonthSelect(expenses) {
+    const months = getAvailableMonths(expenses);
+    const desiredValue = selectedPeriod ?? getCurrentYearMonth();
+
+    monthSelect.innerHTML = '';
+    const allOption = document.createElement('option');
+    allOption.value = 'all';
+    allOption.textContent = 'All months';
+    monthSelect.appendChild(allOption);
+
+    for (const ym of months) {
+      const opt = document.createElement('option');
+      opt.value = ym;
+      opt.textContent = monthOptionLabel(ym);
+      monthSelect.appendChild(opt);
+    }
+
+    // Keep the user's selection if it's still a valid option; otherwise
+    // (first load, or their selected month no longer exists) fall back to
+    // the real current month rather than silently jumping to "All months".
+    const validValues = ['all', ...months];
+    selectedPeriod = validValues.includes(desiredValue) ? desiredValue : getCurrentYearMonth();
+    monthSelect.value = selectedPeriod;
+  }
+
+  function updatePeriodMetrics() {
+    const filtered = selectedPeriod === 'all'
+      ? lastExpenses
+      : lastExpenses.filter((e) => e.date.slice(0, 7) === selectedPeriod);
+
+    const sum = filtered.reduce((s, e) => s + e.amount, 0);
+    metricThisMonthEl.textContent = currency(sum);
+    metricCountEl.textContent = filtered.length.toLocaleString();
   }
 
   function buildCategoryChart(values) {
@@ -427,10 +493,11 @@
   }
 
   function render(expenses) {
-    const metrics = computeMetrics(expenses);
-    metricTotalEl.textContent = currency(metrics.total);
-    metricThisMonthEl.textContent = currency(metrics.thisMonth);
-    metricCountEl.textContent = metrics.count.toLocaleString();
+    lastExpenses = expenses;
+    metricTotalEl.textContent = currency(expenses.reduce((sum, e) => sum + e.amount, 0));
+
+    populateMonthSelect(expenses);
+    updatePeriodMetrics();
 
     const categoryValues = computeCategoryTotals(expenses);
     const { labels: monthLabels, values: monthValues } = computeMonthTotals(expenses);
@@ -491,6 +558,10 @@
   }
 
   refreshBtn.addEventListener('click', () => load({ silent: false }));
+  monthSelect.addEventListener('change', () => {
+    selectedPeriod = monthSelect.value;
+    updatePeriodMetrics();
+  });
 
   load({ silent: false });
   setInterval(() => load({ silent: true }), POLL_INTERVAL_MS);
