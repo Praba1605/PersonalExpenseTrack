@@ -300,7 +300,7 @@
 
   const style = getComputedStyle(document.documentElement);
   const cssVar = (name) => style.getPropertyValue(name).trim();
-  const currency = (n) => n.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+  const currency = (n) => n.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
 
   let hasLoadedOnce = false;
   let categoryChart = null;
