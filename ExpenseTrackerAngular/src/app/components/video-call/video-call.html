@@ -1,0 +1,153 @@
+<div class="video-call">
+  @if (status === 'idle') {
+    <section class="call-intro">
+      <span class="call-intro-icon">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+          <path
+            d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z"
+          />
+        </svg>
+      </span>
+      <h2>Start a video call</h2>
+      <p>Turn your camera on, then use the video button in the header to invite someone.</p>
+      <button type="button" class="btn btn-lg" (click)="start()">Start camera</button>
+    </section>
+  } @else {
+    <div class="tiles">
+      <div class="tile">
+        <video #localVideo autoplay playsinline muted [class.hidden-video]="!cameraEnabled"></video>
+        @if (!cameraEnabled) {
+          <div class="overlay">Camera off</div>
+        }
+        <span class="tile-name">You</span>
+      </div>
+
+      <div class="tile">
+        <video #remoteVideo autoplay playsinline></video>
+        @if (status !== 'connected') {
+          <div class="overlay">
+            <span class="pulse-dot"></span>
+            Waiting for them to join
+          </div>
+        }
+        <span class="tile-name">Them</span>
+      </div>
+    </div>
+
+    <div class="control-bar">
+      <button
+        type="button"
+        class="ctrl"
+        [class.off]="!micEnabled"
+        (click)="toggleMic()"
+        [title]="micEnabled ? 'Mute' : 'Unmute'"
+        [attr.aria-label]="micEnabled ? 'Mute' : 'Unmute'"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+          <path
+            d="M17 11h-1.7c0 2.76-2.24 5-5 5s-5-2.24-5-5H3c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92z"
+          />
+          @if (!micEnabled) {
+            <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" stroke-width="2" />
+          }
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        class="ctrl"
+        [class.off]="!cameraEnabled"
+        [disabled]="screenSharing"
+        (click)="toggleCamera()"
+        [title]="cameraEnabled ? 'Turn camera off' : 'Turn camera on'"
+        [attr.aria-label]="cameraEnabled ? 'Turn camera off' : 'Turn camera on'"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path
+            d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z"
+          />
+          @if (!cameraEnabled) {
+            <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" stroke-width="2" />
+          }
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        class="ctrl"
+        [class.active]="screenSharing"
+        (click)="toggleScreenShare()"
+        [title]="screenSharing ? 'Stop sharing your screen' : 'Share your screen'"
+        [attr.aria-label]="screenSharing ? 'Stop sharing your screen' : 'Share your screen'"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path
+            d="M20 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h6v2H8v2h8v-2h-2v-2h6a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 12H4V5h16z"
+          />
+        </svg>
+      </button>
+
+      <span class="ctrl-divider"></span>
+
+      <button
+        type="button"
+        class="ctrl ctrl-danger"
+        (click)="hangUp()"
+        title="Leave the call"
+        aria-label="Leave the call"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path
+            d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08A.956.956 0 0 1 0 12.38c0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.27 11.27 0 0 0-2.67-1.85.996.996 0 0 1-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <div class="call-meta">
+      <span class="id-chip">
+        <span class="id-label">Your ID</span>
+        <code>{{ myPeerId || 'connecting…' }}</code>
+      </span>
+
+      <div class="dial">
+        <input
+          type="text"
+          class="field"
+          [(ngModel)]="remotePeerId"
+          placeholder="Paste a call link or ID"
+          (keydown.enter)="call()"
+        />
+        <button type="button" class="btn btn-ghost" (click)="call()">Call</button>
+      </div>
+    </div>
+
+    <div class="chat-panel">
+      <div class="messages">
+        @for (msg of chatMessages; track $index) {
+          <p class="message" [class.mine]="msg.fromMe">{{ msg.text }}</p>
+        } @empty {
+          <p class="chat-empty">Messages you send during the call show up here.</p>
+        }
+      </div>
+      <div class="chat-input">
+        <input
+          type="text"
+          class="field"
+          [(ngModel)]="chatDraft"
+          [disabled]="!chatReady"
+          placeholder="Type a message"
+          (keydown.enter)="sendChatMessage()"
+        />
+        <button type="button" class="btn" [disabled]="!chatReady" (click)="sendChatMessage()">
+          Send
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (error) {
+    <p class="alert" role="alert">{{ error }}</p>
+  }
+</div>
