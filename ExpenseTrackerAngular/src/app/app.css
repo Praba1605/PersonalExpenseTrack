@@ -23,18 +23,6 @@ h1 {
   color: var(--text);
 }
 
-.layout {
-  display: flex;
-  gap: 2rem;
-  align-items: flex-start;
-  flex-wrap: wrap;
-}
-
-.layout app-expense-list {
-  flex: 1;
-  min-width: 320px;
-}
-
 .tabs {
   display: flex;
   gap: 0.25rem;
@@ -48,6 +36,7 @@ h1 {
   border-bottom: 2px solid transparent;
   background: none;
   color: var(--text-muted);
+  font-family: inherit;
   font-size: 0.925rem;
   font-weight: 550;
   cursor: pointer;
@@ -61,4 +50,104 @@ h1 {
 .tabs button.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
+}
+
+.list-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.85rem;
+}
+
+.add-btn {
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.add-btn:hover {
+  background: var(--accent-strong);
+}
+
+.add-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- add / edit dialog ---------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(16, 24, 40, 0.45);
+  animation: backdrop-in 0.12s ease-out;
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.modal-panel {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  /* Never taller than the screen: the form scrolls inside instead. */
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.modal-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* On a phone the dialog takes the screen rather than floating in it. */
+@media (max-width: 560px) {
+  .modal-backdrop {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .modal-panel {
+    max-width: none;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
 }

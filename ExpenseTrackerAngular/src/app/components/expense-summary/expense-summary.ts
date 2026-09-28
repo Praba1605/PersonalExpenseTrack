@@ -1,68 +1,91 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Expense } from '../../models/expense.model';
+import { FormsModule } from '@angular/forms';
+import { Expense, MonthFilter } from '../../models/expense.model';
+
+const ALL_MONTHS = 'all';
+
+interface MonthOption {
+  /** "all", or "YYYY-MM". */
+  value: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-expense-summary',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './expense-summary.html',
   styleUrl: './expense-summary.css',
 })
 export class ExpenseSummary {
   @Input() expenses: Expense[] = [];
 
-  private today = new Date();
-  selectedYear = this.today.getFullYear();
-  selectedMonth = this.today.getMonth(); // 0-11
+  /** Emitted whenever the chosen period changes; null means every month. */
+  @Output() filterChange = new EventEmitter<MonthFilter | null>();
 
-  get isCurrentMonth(): boolean {
-    return this.selectedYear === this.today.getFullYear() && this.selectedMonth === this.today.getMonth();
+  private today = new Date();
+  selected = this.monthValue(this.today.getFullYear(), this.today.getMonth());
+
+  /**
+   * The months that actually have expenses, newest first, plus the current
+   * month so a fresh tracker still offers something to pick.
+   */
+  get monthOptions(): MonthOption[] {
+    const values = new Set<string>([
+      this.monthValue(this.today.getFullYear(), this.today.getMonth()),
+    ]);
+
+    for (const expense of this.expenses) {
+      const [year, month] = expense.date.split('-').map(Number);
+      values.add(this.monthValue(year, month - 1));
+    }
+
+    const months = [...values]
+      .sort()
+      .reverse()
+      .map((value) => ({ value, label: this.monthLabelFor(value) }));
+
+    return [{ value: ALL_MONTHS, label: 'All months' }, ...months];
   }
 
   get filteredExpenses(): Expense[] {
-    // Compare the "yyyy-MM-dd" string directly rather than parsing it into a
-    // Date — a date-only string parses as UTC midnight, which getFullYear()/
-    // getMonth() would then read back in the viewer's local timezone and can
-    // shift the day by one for anyone behind UTC.
-    return this.expenses.filter((e) => {
-      const [year, month] = e.date.split('-').map(Number);
-      return year === this.selectedYear && month - 1 === this.selectedMonth;
-    });
+    if (this.selected === ALL_MONTHS) {
+      return this.expenses;
+    }
+
+    // Compare the "yyyy-MM" prefix directly rather than parsing into a Date --
+    // a date-only string parses as UTC midnight, which then reads back in the
+    // viewer's local timezone and can shift the month for anyone behind UTC.
+    return this.expenses.filter((expense) => expense.date.substring(0, 7) === this.selected);
   }
 
   get monthlyTotal(): number {
-    return this.filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+    return this.filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   }
 
   get monthlyCount(): number {
     return this.filteredExpenses.length;
   }
 
-  get monthLabel(): string {
-    return new Date(this.selectedYear, this.selectedMonth, 1).toLocaleString('default', {
+  onSelectionChange(): void {
+    if (this.selected === ALL_MONTHS) {
+      this.filterChange.emit(null);
+      return;
+    }
+
+    const [year, month] = this.selected.split('-').map(Number);
+    this.filterChange.emit({ year, month: month - 1 });
+  }
+
+  private monthValue(year: number, monthIndex: number): string {
+    return `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+  }
+
+  private monthLabelFor(value: string): string {
+    const [year, month] = value.split('-').map(Number);
+    return new Date(year, month - 1, 1).toLocaleString('default', {
       month: 'long',
       year: 'numeric',
     });
-  }
-
-  previousMonth(): void {
-    this.selectedMonth--;
-    if (this.selectedMonth < 0) {
-      this.selectedMonth = 11;
-      this.selectedYear--;
-    }
-  }
-
-  nextMonth(): void {
-    this.selectedMonth++;
-    if (this.selectedMonth > 11) {
-      this.selectedMonth = 0;
-      this.selectedYear++;
-    }
-  }
-
-  resetToCurrentMonth(): void {
-    this.selectedYear = this.today.getFullYear();
-    this.selectedMonth = this.today.getMonth();
   }
 }

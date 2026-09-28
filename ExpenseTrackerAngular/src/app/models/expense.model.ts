@@ -9,6 +9,13 @@ export interface Expense {
   date: string;
 }
 
+/** The period the Expenses page is showing; null elsewhere means "all". */
+export interface MonthFilter {
+  year: number;
+  /** 0-11, matching Date.getMonth(). */
+  month: number;
+}
+
 export interface ExpenseInput {
   title: string;
   amount: number;

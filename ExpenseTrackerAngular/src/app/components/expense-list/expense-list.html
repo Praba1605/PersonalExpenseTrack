@@ -11,30 +11,164 @@
     <table>
       <thead>
         <tr>
-          <th>Date</th>
+          <th>
+            <span class="th-label">
+              Date
+              <button
+                type="button"
+                class="filter-toggle"
+                [class.active]="dateFilter"
+                (click)="toggleDateFilter()"
+                title="Filter by date"
+                aria-label="Filter by date"
+                [attr.aria-expanded]="dateFilterOpen"
+              >
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+              <path d="M3 5h18l-7 8v6l-4 2v-8z" />
+            </svg>
+              </button>
+            </span>
+          </th>
           <th>Title</th>
-          <th>Category</th>
-          <th>Amount</th>
-          <th>Actions</th>
+          <th>
+            <span class="th-label">
+              Category
+              <button
+                type="button"
+                class="filter-toggle"
+                [class.active]="categoryFilter"
+                (click)="toggleCategoryFilter()"
+                title="Filter by category"
+                aria-label="Filter by category"
+                [attr.aria-expanded]="categoryFilterOpen"
+              >
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+              <path d="M3 5h18l-7 8v6l-4 2v-8z" />
+            </svg>
+              </button>
+            </span>
+          </th>
+          <th class="num">Amount</th>
+          <th class="actions-head">Actions</th>
         </tr>
+        @if (filterRowVisible) {
+          <tr class="filter-row">
+            <th>
+              @if (dateFilterOpen || dateFilter) {
+                <input
+                  type="date"
+                  class="col-filter"
+                  [(ngModel)]="dateFilter"
+                  aria-label="Date to show"
+                />
+              }
+            </th>
+            <th></th>
+            <th>
+              @if (categoryFilterOpen || categoryFilter) {
+                <select
+                  class="col-filter"
+                  [(ngModel)]="categoryFilter"
+                  aria-label="Category to show"
+                >
+                  <option value="">All categories</option>
+                  @for (cat of categories; track cat) {
+                    <option [value]="cat">{{ cat }}</option>
+                  }
+                </select>
+              }
+            </th>
+            <th></th>
+            <th class="actions-head">
+              @if (hasColumnFilters) {
+                <button type="button" class="clear-filters" (click)="clearColumnFilters()">
+                  Clear
+                </button>
+              }
+            </th>
+          </tr>
+        }
       </thead>
       <tbody>
-        @for (expense of expenses; track expense.id) {
+        @for (expense of visibleExpenses; track expense.id) {
           <tr>
             <td>{{ formatDate(expense.date) }}</td>
             <td>{{ expense.title }}</td>
-            <td>{{ expense.category }}</td>
-            <td>{{ expense.amount | currency: 'INR' }}</td>
+            <td>
+              <span class="badge" [class]="categoryClass(expense.category)">
+                {{ expense.category }}
+              </span>
+            </td>
+            <td class="num">{{ expense.amount | currency: 'INR' }}</td>
             <td class="actions">
-              <button type="button" (click)="onEdit(expense)">Edit</button>
-              <button
-                type="button"
-                class="danger"
-                [disabled]="deletingId === expense.id"
-                (click)="onDelete(expense)"
-              >
-                {{ deletingId === expense.id ? 'Deleting...' : 'Delete' }}
-              </button>
+              @if (confirmingId === expense.id) {
+                <span class="confirm">
+                  <span class="confirm-text">Delete?</span>
+                  <button
+                    type="button"
+                    class="icon-btn danger"
+                    [disabled]="deletingId === expense.id"
+                    (click)="onDelete(expense)"
+                    title="Confirm delete"
+                    aria-label="Confirm delete"
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                      <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn"
+                    (click)="cancelDelete()"
+                    title="Keep expense"
+                    aria-label="Keep expense"
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                      <path
+                        d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                      />
+                    </svg>
+                  </button>
+                </span>
+              } @else {
+                <button
+                  type="button"
+                  class="icon-btn"
+                  (click)="onEdit(expense)"
+                  [title]="'Edit ' + expense.title"
+                  [attr.aria-label]="'Edit ' + expense.title"
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                    <path
+                      d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn danger"
+                  [disabled]="deletingId === expense.id"
+                  (click)="askDelete(expense)"
+                  [title]="'Delete ' + expense.title"
+                  [attr.aria-label]="'Delete ' + expense.title"
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                    <path
+                      d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                    />
+                  </svg>
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr class="empty-row">
+            <td colspan="5">
+              {{
+                hasColumnFilters
+                  ? 'No expenses match these filters.'
+                  : 'No expenses in this period.'
+              }}
             </td>
           </tr>
         }

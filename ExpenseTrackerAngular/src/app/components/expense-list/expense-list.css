@@ -23,25 +23,214 @@ td {
   border-bottom: 1px solid #eee;
 }
 
-.actions {
-  display: flex;
-  gap: 0.5rem;
+
+/* ---------- table polish ---------- */
+
+tbody td:first-child {
+  white-space: nowrap;
 }
 
-button {
-  padding: 0.3rem 0.6rem;
+
+tbody tr {
+  transition: background 0.12s ease;
+}
+
+tbody tr:hover {
+  background: var(--surface-sunken);
+}
+
+.num {
+  text-align: right;
+}
+
+.actions-head {
+  text-align: right;
+}
+
+td.actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ---------- category badges ---------- */
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.cat-food {
+  background: #e6f4ea;
+  color: #137333;
+}
+
+.cat-travel {
+  background: #e8f0fe;
+  color: #1967d2;
+}
+
+.cat-bills {
+  background: #fce8e6;
+  color: #c5221f;
+}
+
+.cat-shopping {
+  background: #f3e8fd;
+  color: #7627bb;
+}
+
+.cat-other {
+  background: #f1f3f4;
+  color: #5f6368;
+}
+
+/* ---------- icon actions ---------- */
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-left: 0.2rem;
+  padding: 0;
   border: none;
-  border-radius: 4px;
-  background: #1565c0;
-  color: white;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.icon-btn.danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.confirm-text {
+  margin-right: 0.15rem;
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* ---------- column filters ---------- */
+
+.filter-row th {
+  padding-top: 0.35rem;
+  padding-bottom: 0.5rem;
+  font-weight: 400;
+}
+
+.col-filter {
+  width: 100%;
+  max-width: 160px;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.8rem;
+}
+
+.col-filter:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.12);
+}
+
+.clear-filters {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.78rem;
   cursor: pointer;
 }
 
-button.danger {
-  background: #b3261e;
+.clear-filters:hover {
+  background: var(--surface-hover);
+  color: var(--text);
 }
 
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.empty-row td {
+  padding: 1.5rem 0.5rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.empty-row:hover {
+  background: none;
+}
+
+.th-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.filter-toggle {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0.55;
+  transition:
+    opacity 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.filter-toggle:hover {
+  opacity: 1;
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+/* A filter that is set stays visible even with its panel closed. */
+.filter-toggle.active {
+  opacity: 1;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.filter-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }

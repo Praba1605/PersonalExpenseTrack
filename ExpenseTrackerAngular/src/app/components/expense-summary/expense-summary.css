@@ -11,40 +11,10 @@
   margin-bottom: 1rem;
 }
 
-.month-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
 
-.nav-btn {
-  border: none;
-  background: transparent;
-  font-size: 1.1rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #2e7d32;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-}
 
-.nav-btn:hover {
-  background: #dcefe2;
-}
 
-.today-btn {
-  border: 1px solid #2e7d32;
-  background: transparent;
-  color: #2e7d32;
-  font-size: 0.75rem;
-  padding: 0.1rem 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-}
 
-.label {
-  font-weight: 600;
-}
 
 .amount {
   font-size: 1.4rem;
@@ -55,4 +25,25 @@
 .count {
   color: #666;
   font-size: 0.85rem;
+}
+
+.summary-head {
+  margin-bottom: 0.15rem;
+}
+
+.month-filter {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 550;
+}
+
+.month-filter:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.12);
 }

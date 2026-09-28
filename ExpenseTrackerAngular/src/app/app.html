@@ -17,19 +17,43 @@
   } @else if (activeTab === 'meeting') {
     <app-meeting [joinCode]="meetingJoinCode"></app-meeting>
   } @else {
-    <app-expense-summary [expenses]="allExpenses"></app-expense-summary>
+    <app-expense-summary
+      [expenses]="allExpenses"
+      (filterChange)="onMonthFilterChange($event)"
+    ></app-expense-summary>
 
-    <div class="layout">
-      <app-expense-form
-        [expenseToEdit]="editingExpense"
-        (saved)="onSaved()"
-        (cancelled)="onCancelled()"
-      ></app-expense-form>
-
-      <app-expense-list
-        (edit)="onEdit($event)"
-        (expensesLoaded)="onExpensesLoaded($event)"
-      ></app-expense-list>
+    <div class="list-toolbar">
+      <button type="button" class="add-btn" (click)="openAddForm()">+ Add Expense</button>
     </div>
+
+    <app-expense-list
+      [monthFilter]="monthFilter"
+      (edit)="onEdit($event)"
+      (expensesLoaded)="onExpensesLoaded($event)"
+    ></app-expense-list>
+
+    @if (formOpen) {
+      <!-- Clicking the backdrop is the same as cancelling; the stopPropagation
+           on the panel keeps a click inside the form from closing it. -->
+      <div class="modal-backdrop" (click)="closeForm()">
+        <div
+          class="modal-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Expense details"
+          (click)="$event.stopPropagation()"
+        >
+          <button type="button" class="modal-close" (click)="closeForm()" aria-label="Close">
+            &times;
+          </button>
+
+          <app-expense-form
+            [expenseToEdit]="editingExpense"
+            (saved)="onSaved()"
+            (cancelled)="onCancelled()"
+          ></app-expense-form>
+        </div>
+      </div>
+    }
   }
 </main>
