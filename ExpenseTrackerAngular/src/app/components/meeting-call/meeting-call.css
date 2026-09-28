@@ -1,0 +1,590 @@
+:host {
+  --meet-bg: #202124;
+  --meet-surface: #2d2e30;
+  --meet-raised: #3c4043;
+  --meet-text: #e8eaed;
+  --meet-muted: #9aa0a6;
+  --meet-line: #5f6368;
+  --meet-red: #ea4335;
+  --meet-blue: #8ab4f8;
+}
+
+.meet {
+  display: flex;
+  gap: 0.5rem;
+  height: min(78vh, 720px);
+  padding: 0.5rem;
+  background: var(--meet-bg);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+/* ---------- stage ---------- */
+
+.stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  background: #000;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* ---------- participant tiles ---------- */
+
+.tiles {
+  /* Two equal columns at every width -- explicitly never wraps to a second
+     row, so the pair stays side by side on a phone too. */
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  /* Bottom padding keeps the tiles clear of the floating control bar. */
+  padding: 0.75rem 0.75rem 5.25rem;
+}
+
+.tile {
+  position: relative;
+  width: 100%;
+  /* Matches the 16:9 capture requested in CALL_MEDIA_CONSTRAINTS, so a
+     landscape frame fills the tile instead of sitting between black bars. */
+  aspect-ratio: 16 / 9;
+  background: var(--meet-surface);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tile video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* cover, not contain: every feed fills its tile edge to edge, so a phone
+     joining looks the same size as a laptop. The trade is that a frame whose
+     shape differs from 16:9 -- a portrait phone especially -- gets cropped. */
+  object-fit: cover;
+  background: #000;
+}
+
+/* Your own camera reads as a mirror, the way every call app shows it. */
+.tile video.self {
+  transform: scaleX(-1);
+}
+
+.hidden-video {
+  display: none;
+}
+
+.tile-label {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--meet-text);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.tile-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  text-align: center;
+  color: var(--meet-muted);
+  font-size: 0.8rem;
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* ---------- code ---------- */
+
+.code-chip {
+  position: absolute;
+  left: 12px;
+  bottom: 16px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--meet-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- control bar ---------- */
+
+.controls {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem;
+  border-radius: 999px;
+  background: rgba(32, 33, 36, 0.82);
+  backdrop-filter: blur(6px);
+}
+
+.ctl {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 50%;
+  background: var(--meet-raised);
+  color: var(--meet-text);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.ctl:hover:not(:disabled) {
+  background: #4a4e51;
+}
+
+.ctl:focus-visible {
+  outline: 2px solid var(--meet-blue);
+  outline-offset: 2px;
+}
+
+.ctl:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* After :hover so a muted control keeps reading as muted. */
+.ctl.off,
+.ctl.off:hover:not(:disabled) {
+  background: var(--meet-red);
+  color: #fff;
+}
+
+.ctl.active,
+.ctl.active:hover:not(:disabled) {
+  background: var(--meet-blue);
+  color: #202124;
+}
+
+.ctl.leave,
+.ctl.leave:hover:not(:disabled) {
+  width: 60px;
+  border-radius: 999px;
+  background: var(--meet-red);
+  color: #fff;
+}
+
+.ctl.leave:hover:not(:disabled) {
+  background: #c5221f;
+}
+
+.badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--meet-red);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 17px;
+  text-align: center;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.stage-error {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  background: var(--meet-red);
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+/* ---------- chat side panel ---------- */
+
+.chat-side {
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  flex: none;
+  background: var(--meet-surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.chat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
+  border-bottom: 1px solid var(--meet-line);
+}
+
+.chat-head h3 {
+  margin: 0;
+  color: var(--meet-text);
+  font-size: 0.95rem;
+  font-weight: 550;
+}
+
+.chat-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--meet-muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chat-close:hover {
+  background: var(--meet-raised);
+  color: var(--meet-text);
+}
+
+.messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.85rem;
+}
+
+.chat-empty {
+  margin: auto;
+  color: var(--meet-muted);
+  font-size: 0.82rem;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.message {
+  margin: 0;
+  max-width: 80%;
+  padding: 0.45rem 0.7rem;
+  border-radius: 14px;
+  background: var(--meet-raised);
+  color: var(--meet-text);
+  font-size: 0.875rem;
+  align-self: flex-start;
+  word-break: break-word;
+}
+
+.message.mine {
+  background: var(--meet-blue);
+  color: #202124;
+  align-self: flex-end;
+}
+
+.sticker-message {
+  display: block;
+  width: 72px;
+  height: 72px;
+  align-self: flex-start;
+  object-fit: contain;
+}
+
+.sticker-message.mine {
+  align-self: flex-end;
+}
+
+/* ---------- emoji picker ---------- */
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+  gap: 0.15rem;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 0.4rem;
+}
+
+.emoji-option {
+  display: grid;
+  place-items: center;
+  padding: 0.25rem;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}
+
+.emoji-option:hover:not(:disabled) {
+  background: var(--meet-raised);
+}
+
+.emoji-option:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------- composer ---------- */
+
+.chat-input {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem;
+  border-top: 1px solid var(--meet-line);
+}
+
+.chat-field {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--meet-raised);
+  color: var(--meet-text);
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.chat-field::placeholder {
+  color: var(--meet-muted);
+}
+
+.chat-field:focus {
+  outline: 2px solid var(--meet-blue);
+  outline-offset: -1px;
+}
+
+.chat-field:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.emoji-toggle,
+.chat-send {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--meet-muted);
+  cursor: pointer;
+}
+
+.emoji-toggle:hover:not(:disabled),
+.chat-send:hover:not(:disabled) {
+  background: var(--meet-raised);
+  color: var(--meet-text);
+}
+
+.emoji-toggle.open {
+  background: var(--meet-blue);
+  color: #202124;
+}
+
+.emoji-toggle:disabled,
+.chat-send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 720px) {
+  .meet {
+    /* Only the chat panel moves below; the two tiles stay in one row. */
+    flex-direction: column;
+    height: auto;
+    padding: 0.35rem;
+
+    /* Break out of the page gutters so the call gets the whole screen width.
+       Two tiles side by side need every pixel on a phone. */
+    width: 100vw;
+    max-width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    border-radius: 0;
+  }
+
+  .stage {
+    /* Fill most of the screen. Without this the call is a small box stranded
+       near the top of a tall, empty page. */
+    min-height: 62dvh;
+    border-radius: 8px;
+  }
+
+  .chat-side {
+    width: auto;
+    height: 300px;
+  }
+
+  .tiles {
+    gap: 0.35rem;
+    padding: 0.4rem 0.4rem 4.75rem;
+  }
+
+  .code-chip {
+    /* Sits above the control bar, which spans nearly the whole width of a
+       narrow stage and would otherwise cover the code. */
+    bottom: 74px;
+    font-size: 0.72rem;
+  }
+
+  .tile-label {
+    font-size: 0.65rem;
+  }
+
+  .controls {
+    gap: 0.35rem;
+  }
+
+  .ctl {
+    width: 40px;
+    height: 40px;
+  }
+
+  .ctl.leave,
+  .ctl.leave:hover:not(:disabled) {
+    width: 52px;
+  }
+}
+
+/* A phone turned sideways is the good case for two landscape tiles: give the
+   stage the height so they grow instead of leaving bands of black. */
+@media (max-width: 950px) and (orientation: landscape) {
+  .stage {
+    min-height: 80dvh;
+  }
+
+  .tiles {
+    padding-bottom: 4.25rem;
+  }
+}
+
+/* ---------- microphone status ---------- */
+
+.mic-badge {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--meet-red);
+  color: #fff;
+}
+
+/* ---------- host controls ---------- */
+
+.host-menu-wrap {
+  position: relative;
+  display: flex;
+}
+
+.host-menu {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 3;
+  width: 220px;
+  padding: 0.35rem;
+  border-radius: 10px;
+  background: var(--meet-surface);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.host-menu button {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--meet-text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.host-menu button:hover:not(:disabled) {
+  background: var(--meet-raised);
+}
+
+.host-menu button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.host-menu-note {
+  margin: 0.25rem 0.7rem 0.35rem;
+  color: var(--meet-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.stage-notice {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  margin: 0;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  background: rgba(32, 33, 36, 0.92);
+  color: var(--meet-text);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.host-menu-sep {
+  display: block;
+  height: 1px;
+  margin: 0.3rem 0.4rem;
+  background: var(--meet-line);
+}

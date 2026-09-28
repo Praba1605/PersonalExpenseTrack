@@ -23,85 +23,6 @@ h1 {
   color: var(--text);
 }
 
-.invite {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex: none;
-}
-
-.invite-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: var(--radius);
-  background: var(--accent);
-  color: #fff;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition:
-    background 0.15s ease,
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.invite-btn:hover {
-  background: var(--accent-strong);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
-}
-
-.invite-btn:active {
-  transform: none;
-}
-
-.invite-btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.invite-btn.copied {
-  background: var(--success);
-}
-
-.copied-toast {
-  /* Hung below the icon and right-aligned to it, so the pill grows leftward
-     into the page instead of off the edge when the header is narrow. */
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
-  z-index: 2;
-  white-space: nowrap;
-  background: var(--text);
-  color: #fff;
-  font-size: 0.78rem;
-  font-weight: 500;
-  padding: 0.35rem 0.6rem;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow);
-  animation: toast-in 0.15s ease-out;
-}
-
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-}
-
-.invite-error {
-  margin: -0.5rem 0 1.25rem;
-  padding: 0.6rem 0.85rem;
-  border: 1px solid var(--danger-border);
-  border-radius: var(--radius-sm);
-  background: var(--danger-soft);
-  color: #b3261e;
-  font-size: 0.875rem;
-}
-
 .layout {
   display: flex;
   gap: 2rem;
@@ -112,4 +33,32 @@ h1 {
 .layout app-expense-list {
   flex: 1;
   min-width: 320px;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.tabs button {
+  padding: 0.55rem 1rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.925rem;
+  font-weight: 550;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.tabs button:hover {
+  color: var(--text);
+}
+
+.tabs button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }

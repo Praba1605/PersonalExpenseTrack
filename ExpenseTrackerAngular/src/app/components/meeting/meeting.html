@@ -1,0 +1,118 @@
+<div class="meeting">
+  @switch (state) {
+    @case ('landing') {
+      <section class="landing">
+        <h2>Video meetings for two</h2>
+        <p class="landing-sub">Start a meeting and share the code, or join one you were sent.</p>
+
+        <div class="landing-actions">
+          <button type="button" class="btn btn-primary" (click)="newMeeting()">New meeting</button>
+
+          <div class="join-box">
+            <input
+              type="text"
+              class="join-field"
+              [(ngModel)]="joinInput"
+              placeholder="Enter a code or link"
+              aria-label="Enter a meeting code or link"
+              (keydown.enter)="joinWithCode()"
+            />
+            <button
+              type="button"
+              class="btn btn-text"
+              [disabled]="!joinInput.trim()"
+              (click)="joinWithCode()"
+            >
+              Join
+            </button>
+          </div>
+        </div>
+
+        @if (joinError) {
+          <p class="landing-error" role="alert">{{ joinError }}</p>
+        }
+      </section>
+    }
+
+    @case ('creating') {
+      <p class="notice">Getting your meeting ready&hellip;</p>
+    }
+
+    @case ('preview') {
+      <section class="prejoin">
+        <div class="prejoin-video">
+          <video #previewVideo autoplay playsinline muted></video>
+          @if (error) {
+            <div class="prejoin-blocked">{{ error }}</div>
+          }
+        </div>
+
+        <div class="prejoin-side">
+          <h2>Ready to join?</h2>
+
+          @if (role === 'host') {
+            <p class="prejoin-sub">Share this code so the other person can join you.</p>
+
+            <div class="code-row">
+              <code class="code">{{ roomCode }}</code>
+              <button
+                type="button"
+                class="btn btn-text"
+                [class.copied]="linkCopied"
+                (click)="copyLink()"
+              >
+                {{ linkCopied ? 'Copied' : 'Copy link' }}
+              </button>
+            </div>
+
+            <p class="link-hint">{{ meetingLink }}</p>
+          } @else {
+            <p class="prejoin-sub">Joining meeting</p>
+            <code class="code">{{ roomCode }}</code>
+          }
+
+          <div class="prejoin-buttons">
+            <button type="button" class="btn btn-primary" (click)="joinNow()">Join now</button>
+            <button type="button" class="btn btn-text" (click)="backToLanding()">Cancel</button>
+          </div>
+        </div>
+      </section>
+    }
+
+    @case ('in-call') {
+      <app-meeting-call
+        [mode]="role === 'host' ? 'meeting-host' : 'meeting-guest'"
+        [autoStart]="role === 'host'"
+        [autoConnectId]="role === 'guest' ? hostPeerId : ''"
+        [displayCode]="roomCode"
+        (statusChange)="onStatusChange($event)"
+        (roomFull)="onRoomFull()"
+        (ended)="onEnded()"
+      ></app-meeting-call>
+    }
+
+    @case ('full') {
+      <section class="landing">
+        <h2>This meeting is full</h2>
+        <p class="landing-sub">A meeting holds two people, and both places are taken.</p>
+        <button type="button" class="btn btn-primary" (click)="backToLanding()">Back</button>
+      </section>
+    }
+
+    @case ('ended') {
+      <section class="landing">
+        <h2>You left the meeting</h2>
+        <p class="landing-sub">The code is no longer active. Start a new meeting for a fresh one.</p>
+        <button type="button" class="btn btn-primary" (click)="backToLanding()">Back</button>
+      </section>
+    }
+
+    @case ('error') {
+      <section class="landing">
+        <h2>Something went wrong</h2>
+        <p class="landing-sub">{{ error }}</p>
+        <button type="button" class="btn btn-primary" (click)="backToLanding()">Try again</button>
+      </section>
+    }
+  }
+</div>

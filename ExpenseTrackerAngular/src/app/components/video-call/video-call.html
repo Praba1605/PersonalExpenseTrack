@@ -20,6 +20,9 @@
           <div class="overlay">Camera off</div>
         }
         <span class="tile-name">You</span>
+        @if (!micEnabled) {
+          <span class="mic-off-badge" title="Your microphone is off">Muted</span>
+        }
       </div>
 
       <div class="tile">
@@ -31,6 +34,9 @@
           </div>
         }
         <span class="tile-name">Them</span>
+        @if (remoteMicKnown && remoteMuted) {
+          <span class="mic-off-badge" title="Their microphone is off">Muted</span>
+        }
       </div>
     </div>
 
@@ -77,15 +83,50 @@
         type="button"
         class="ctrl"
         [class.active]="screenSharing"
+        [disabled]="!screenShareSupported"
         (click)="toggleScreenShare()"
-        [title]="screenSharing ? 'Stop sharing your screen' : 'Share your screen'"
-        [attr.aria-label]="screenSharing ? 'Stop sharing your screen' : 'Share your screen'"
+        [title]="
+          !screenShareSupported
+            ? 'Screen sharing is not supported on this browser'
+            : screenSharing
+              ? 'Stop sharing your screen'
+              : 'Share your screen'
+        "
+        [attr.aria-label]="
+          !screenShareSupported
+            ? 'Screen sharing is not supported on this browser'
+            : screenSharing
+              ? 'Stop sharing your screen'
+              : 'Share your screen'
+        "
       >
         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
           <path
             d="M20 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h6v2H8v2h8v-2h-2v-2h6a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 12H4V5h16z"
           />
         </svg>
+      </button>
+
+      <button
+        type="button"
+        class="ctrl ctrl-badged"
+        [class.active]="chatOpen"
+        (click)="toggleChat()"
+        [title]="chatOpen ? 'Hide chat' : 'Show chat'"
+        [attr.aria-label]="chatOpen ? 'Hide chat' : 'Show chat'"
+        [attr.aria-expanded]="chatOpen"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path
+            d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM7 9h10v2H7V9zm6 5H7v-2h6v2zm4-6H7V6h10v2z"
+          />
+        </svg>
+        @if (unreadCount && !chatOpen) {
+          <span class="ctrl-badge" aria-live="polite">
+            {{ unreadCount > 9 ? '9+' : unreadCount }}
+            <span class="sr-only">unread messages</span>
+          </span>
+        }
       </button>
 
       <span class="ctrl-divider"></span>
@@ -123,15 +164,60 @@
       </div>
     </div>
 
+    @if (chatOpen) {
     <div class="chat-panel">
-      <div class="messages">
+      <div class="messages" #messageList>
         @for (msg of chatMessages; track $index) {
-          <p class="message" [class.mine]="msg.fromMe">{{ msg.text }}</p>
+          @if (msg.kind === 'sticker') {
+            <img
+              class="sticker-message"
+              [class.mine]="msg.fromMe"
+              [src]="stickerUrl(msg.stickerId)"
+              [alt]="msg.label"
+              width="72"
+              height="72"
+            />
+          } @else {
+            <p class="message" [class.mine]="msg.fromMe">{{ msg.text }}</p>
+          }
         } @empty {
           <p class="chat-empty">Messages you send during the call show up here.</p>
         }
       </div>
+      @if (stickerPanelOpen) {
+        <div class="sticker-panel" role="group" aria-label="Emoji">
+          @for (emoji of emojis; track emoji.id) {
+            <button
+              type="button"
+              class="sticker-option"
+              [disabled]="!chatReady"
+              [title]="emoji.label"
+              [attr.aria-label]="'Send ' + emoji.label"
+              (click)="sendSticker(emoji)"
+            >
+              <img [src]="stickerUrl(emoji.id)" [alt]="emoji.label" width="28" height="28" />
+            </button>
+          }
+        </div>
+      }
+
       <div class="chat-input">
+        <button
+          type="button"
+          class="sticker-toggle"
+          [class.open]="stickerPanelOpen"
+          [disabled]="!chatReady"
+          (click)="toggleStickerPanel()"
+          title="Stickers"
+          aria-label="Stickers"
+          [attr.aria-expanded]="stickerPanelOpen"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+            <path
+              d="M12 2a10 10 0 1 0 10 10h-4a6 6 0 0 1-6 6 6 6 0 0 1 0-12V2zm2 0v6h6a10 10 0 0 0-6-6z"
+            />
+          </svg>
+        </button>
         <input
           type="text"
           class="field"
@@ -145,6 +231,7 @@
         </button>
       </div>
     </div>
+    }
   }
 
   @if (error) {

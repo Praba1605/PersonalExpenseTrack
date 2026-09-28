@@ -1,0 +1,315 @@
+<div class="meet" [class.with-chat]="chatOpen">
+  <div class="stage">
+    <!-- Both people get an identical tile, side by side, never stacked. -->
+    <div class="tiles">
+      <div class="tile">
+        <video
+          #localVideo
+          class="self"
+          autoplay
+          playsinline
+          muted
+          [class.hidden-video]="!cameraEnabled"
+        ></video>
+        @if (!cameraEnabled) {
+          <span class="tile-overlay">Camera off</span>
+        }
+        <span class="tile-label">You</span>
+        @if (!micEnabled) {
+          <span class="mic-badge" title="Your microphone is off" aria-label="Your microphone is off">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+            <path d="M17 11h-1.7c0 2.76-2.24 5-5 5s-5-2.24-5-5H3c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92z" />
+            <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" />
+          </svg>
+          </span>
+        }
+      </div>
+
+      <div class="tile">
+        <video #remoteVideo autoplay playsinline></video>
+        @if (status !== 'connected') {
+          <span class="tile-overlay">
+            <span class="pulse-dot"></span>
+            Waiting to join&hellip;
+          </span>
+        }
+        <span class="tile-label">Them</span>
+        @if (remoteMicKnown && remoteMuted) {
+          <span class="mic-badge" title="Their microphone is off" aria-label="Their microphone is off">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+            <path d="M17 11h-1.7c0 2.76-2.24 5-5 5s-5-2.24-5-5H3c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92z" />
+            <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" />
+          </svg>
+          </span>
+        }
+      </div>
+    </div>
+
+    @if (displayCode) {
+      <span class="code-chip">{{ displayCode }}</span>
+    }
+
+    <div class="controls">
+      <button
+        type="button"
+        class="ctl"
+        [class.off]="!micEnabled"
+        (click)="toggleMic()"
+        [title]="
+          !micAvailable
+            ? 'No microphone available'
+            : micEnabled
+              ? 'Mute'
+              : 'Unmute'
+        "
+        [attr.aria-label]="
+          !micAvailable ? 'No microphone available' : micEnabled ? 'Mute' : 'Unmute'
+        "
+        [attr.aria-pressed]="!micEnabled"
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+          <path
+            d="M17 11h-1.7c0 2.76-2.24 5-5 5s-5-2.24-5-5H3c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92z"
+          />
+          @if (!micEnabled) {
+            <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" stroke-width="2" />
+          }
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        class="ctl"
+        [class.off]="!cameraEnabled"
+        [disabled]="screenSharing"
+        (click)="toggleCamera()"
+        [title]="cameraEnabled ? 'Turn off camera' : 'Turn on camera'"
+        [attr.aria-label]="cameraEnabled ? 'Turn off camera' : 'Turn on camera'"
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+          <path
+            d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z"
+          />
+          @if (!cameraEnabled) {
+            <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" stroke-width="2" />
+          }
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        class="ctl"
+        [class.active]="screenSharing"
+        [disabled]="!screenShareSupported"
+        (click)="toggleScreenShare()"
+        [title]="
+          !screenShareSupported
+            ? 'Screen sharing is not supported on this browser'
+            : screenSharing
+              ? 'Stop presenting'
+              : 'Present now'
+        "
+        [attr.aria-label]="
+          !screenShareSupported
+            ? 'Screen sharing is not supported on this browser'
+            : screenSharing
+              ? 'Stop presenting'
+              : 'Present now'
+        "
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+          <path
+            d="M20 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h6v2H8v2h8v-2h-2v-2h6a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm0 12H4V5h16z"
+          />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        class="ctl badged"
+        [class.active]="chatOpen"
+        (click)="toggleChat()"
+        [title]="chatOpen ? 'Hide chat' : 'Show chat'"
+        [attr.aria-label]="chatOpen ? 'Hide chat' : 'Show chat'"
+        [attr.aria-expanded]="chatOpen"
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+          <path
+            d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM7 9h10v2H7V9zm6 5H7v-2h6v2zm4-6H7V6h10v2z"
+          />
+        </svg>
+        @if (unreadCount && !chatOpen) {
+          <span class="badge" aria-live="polite">
+            {{ unreadCount > 9 ? '9+' : unreadCount }}
+            <span class="sr-only">unread messages</span>
+          </span>
+        }
+      </button>
+
+      @if (isHost) {
+        <div class="host-menu-wrap">
+          <button
+            type="button"
+            class="ctl"
+            [class.active]="hostMenuOpen"
+            (click)="toggleHostMenu()"
+            title="Host controls"
+            aria-label="Host controls"
+            [attr.aria-expanded]="hostMenuOpen"
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+              <circle cx="12" cy="5" r="2" />
+              <circle cx="12" cy="12" r="2" />
+              <circle cx="12" cy="19" r="2" />
+            </svg>
+          </button>
+
+          @if (hostMenuOpen) {
+            <div class="host-menu" role="menu">
+              <button
+                type="button"
+                role="menuitem"
+                [disabled]="!chatReady || remoteMuted"
+                (click)="muteParticipant()"
+              >
+                Mute participant
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                [disabled]="!chatReady || !remoteMuted"
+                (click)="unmuteParticipant()"
+              >
+                Unmute participant
+              </button>
+
+              <span class="host-menu-sep"></span>
+
+              <button type="button" role="menuitem" [disabled]="!chatReady" (click)="muteEveryone()">
+                Mute all
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                [disabled]="!chatReady"
+                (click)="unmuteEveryone()"
+              >
+                Unmute all
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <button
+        type="button"
+        class="ctl leave"
+        (click)="hangUp()"
+        title="Leave call"
+        aria-label="Leave call"
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+          <path
+            d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08A.956.956 0 0 1 0 12.38c0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.27 11.27 0 0 0-2.67-1.85.996.996 0 0 1-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"
+          />
+        </svg>
+      </button>
+    </div>
+
+    @if (hostNotice) {
+      <p class="stage-notice" role="status">{{ hostNotice }}</p>
+    }
+
+    @if (error) {
+      <p class="stage-error" role="alert">{{ error }}</p>
+    }
+  </div>
+
+  @if (chatOpen) {
+    <aside class="chat-side" aria-label="In-call messages">
+      <header class="chat-head">
+        <h3>In-call messages</h3>
+        <button type="button" class="chat-close" (click)="toggleChat()" aria-label="Close chat">
+          &times;
+        </button>
+      </header>
+
+      <div class="messages" #messageList>
+        @for (msg of chatMessages; track $index) {
+          @if (msg.kind === 'sticker') {
+            <img
+              class="sticker-message"
+              [class.mine]="msg.fromMe"
+              [src]="stickerUrl(msg.stickerId)"
+              [alt]="msg.label"
+              width="72"
+              height="72"
+            />
+          } @else {
+            <p class="message" [class.mine]="msg.fromMe">{{ msg.text }}</p>
+          }
+        } @empty {
+          <p class="chat-empty">Messages can only be seen by people in the call.</p>
+        }
+      </div>
+
+      @if (stickerPanelOpen) {
+        <div class="emoji-grid" role="group" aria-label="Emoji">
+          @for (emoji of emojis; track emoji.id) {
+            <button
+              type="button"
+              class="emoji-option"
+              [disabled]="!chatReady"
+              [title]="emoji.label"
+              [attr.aria-label]="'Send ' + emoji.label"
+              (click)="sendSticker(emoji)"
+            >
+              <img [src]="stickerUrl(emoji.id)" [alt]="emoji.label" width="28" height="28" />
+            </button>
+          }
+        </div>
+      }
+
+      <div class="chat-input">
+        <button
+          type="button"
+          class="emoji-toggle"
+          [class.open]="stickerPanelOpen"
+          [disabled]="!chatReady"
+          (click)="toggleStickerPanel()"
+          title="Emoji"
+          aria-label="Emoji"
+          [attr.aria-expanded]="stickerPanelOpen"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+            <path
+              d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm-3.5 6a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm7 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM12 18a5.5 5.5 0 0 1-5-3.2h10A5.5 5.5 0 0 1 12 18z"
+            />
+          </svg>
+        </button>
+        <input
+          type="text"
+          class="chat-field"
+          [(ngModel)]="chatDraft"
+          [disabled]="!chatReady"
+          placeholder="Send a message"
+          (keydown.enter)="sendChatMessage()"
+        />
+        <button
+          type="button"
+          class="chat-send"
+          [disabled]="!chatReady"
+          (click)="sendChatMessage()"
+          aria-label="Send message"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+            <path d="M2 21l21-9L2 3v7l15 2-15 2z" />
+          </svg>
+        </button>
+      </div>
+    </aside>
+  }
+</div>

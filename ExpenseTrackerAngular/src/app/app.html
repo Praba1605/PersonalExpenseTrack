@@ -1,40 +1,22 @@
 <main class="app-shell">
   <header class="app-header">
     <h1>Personal Expense Tracker</h1>
-
-    <div class="invite">
-      <button
-        type="button"
-        class="invite-btn"
-        [class.copied]="linkCopied"
-        (click)="copyInviteLink()"
-        [title]="linkCopied ? 'Link copied' : 'Copy a link that joins my video call'"
-        [attr.aria-label]="linkCopied ? 'Link copied' : 'Copy a link that joins my video call'"
-      >
-        @if (linkCopied) {
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
-            <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-          </svg>
-        } @else {
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
-            <path
-              d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z"
-            />
-          </svg>
-        }
-      </button>
-
-      @if (linkCopied) {
-        <span class="copied-toast" role="status">Link copied!</span>
-      }
-    </div>
   </header>
 
-  @if (inviteError) {
-    <p class="invite-error" role="alert">{{ inviteError }}</p>
-  }
+  <div class="tabs">
+    <button type="button" [class.active]="!directCall && activeTab === 'expenses'" (click)="selectTab('expenses')">
+      Expenses
+    </button>
+    <button type="button" [class.active]="!directCall && activeTab === 'meeting'" (click)="selectTab('meeting')">
+      Meeting
+    </button>
+  </div>
 
-  @if (activeTab === 'expenses') {
+  @if (directCall) {
+    <app-video-call [autoConnectId]="autoConnectId" (ended)="onCallEnded()"></app-video-call>
+  } @else if (activeTab === 'meeting') {
+    <app-meeting [joinCode]="meetingJoinCode"></app-meeting>
+  } @else {
     <app-expense-summary [expenses]="allExpenses"></app-expense-summary>
 
     <div class="layout">
@@ -49,11 +31,5 @@
         (expensesLoaded)="onExpensesLoaded($event)"
       ></app-expense-list>
     </div>
-  } @else {
-    <app-video-call
-      [autoConnectId]="autoConnectId"
-      [autoStart]="hostingCall"
-      (ended)="onCallEnded()"
-    ></app-video-call>
   }
 </main>
