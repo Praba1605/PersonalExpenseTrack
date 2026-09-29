@@ -71,8 +71,26 @@
             <code class="code">{{ roomCode }}</code>
           }
 
+          <label class="name-label" for="displayName">Your name</label>
+          <input
+            id="displayName"
+            type="text"
+            class="name-field"
+            maxlength="40"
+            [(ngModel)]="displayName"
+            placeholder="e.g. Prakash"
+            (keydown.enter)="joinNow()"
+          />
+
           <div class="prejoin-buttons">
-            <button type="button" class="btn btn-primary" (click)="joinNow()">Join now</button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="!canJoin"
+              (click)="joinNow()"
+            >
+              Join now
+            </button>
             <button type="button" class="btn btn-text" (click)="backToLanding()">Cancel</button>
           </div>
         </div>
@@ -85,6 +103,7 @@
         [autoStart]="role === 'host'"
         [autoConnectId]="role === 'guest' ? hostPeerId : ''"
         [displayCode]="roomCode"
+        [displayName]="displayName"
         (statusChange)="onStatusChange($event)"
         (roomFull)="onRoomFull()"
         (ended)="onEnded()"

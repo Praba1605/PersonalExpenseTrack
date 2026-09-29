@@ -38,7 +38,9 @@ type ChatPayload =
   /** The host asking us to mute or unmute. Only honoured when it comes from
    *  the host -- see acceptsHostCommands. */
   | { kind: 'mute-request' }
-  | { kind: 'unmute-request' };
+  | { kind: 'unmute-request' }
+  /** Who we are, so the other side can label our tile. */
+  | { kind: 'name'; name: string };
 
 /**
  * 'direct' is the original /call/<id> behaviour, left untouched. The meeting
@@ -60,6 +62,9 @@ export class VideoCall implements OnInit, OnChanges, OnDestroy {
   @Input() autoStart = false;
 
   @Input() mode: CallMode = 'direct';
+
+  /** Shown on our own tile and sent to the other side. Empty on /call/. */
+  @Input() displayName = '';
 
   /** Hanging up is the way back to the expenses view. */
   @Output() ended = new EventEmitter<void>();
@@ -87,6 +92,8 @@ export class VideoCall implements OnInit, OnChanges, OnDestroy {
   micPermission: PermissionState | 'unknown' = 'unknown';
   hostMenuOpen = false;
   hostNotice = '';
+  /** Their name once it arrives; '' until then. */
+  remoteName = '';
   cameraEnabled = true;
   screenSharing = false;
   chatReady = false;
@@ -509,6 +516,12 @@ export class VideoCall implements OnInit, OnChanges, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  private announceName(): void {
+    if (this.displayName && this.dataConn?.open) {
+      this.send({ kind: 'name', name: this.displayName });
+    }
+  }
+
   /** Keeps the other side's indicator honest the moment anything changes. */
   private announceMic(): void {
     if (this.dataConn?.open) {
@@ -670,9 +683,10 @@ export class VideoCall implements OnInit, OnChanges, OnDestroy {
 
     conn.on('open', () => {
       this.chatReady = true;
-      // Exchange mic state immediately, otherwise each side shows the other as
-      // unmuted until they happen to toggle.
+      // Exchange mic state and name immediately, otherwise each side shows the
+      // other as unmuted and unnamed until they happen to do something.
       this.announceMic();
+      this.announceName();
       this.cdr.markForCheck();
     });
 
@@ -728,6 +742,16 @@ export class VideoCall implements OnInit, OnChanges, OnDestroy {
         this.remoteMicKnown = true;
         this.cdr.markForCheck();
         return true;
+
+      case 'name': {
+        const name = (payload as { name?: string }).name;
+        if (typeof name === 'string') {
+          // Trimmed and capped: this string goes straight onto a tile.
+          this.remoteName = name.trim().slice(0, 40);
+          this.cdr.markForCheck();
+        }
+        return true;
+      }
 
       case 'mute-request':
         // Dropped unless it came from the host.

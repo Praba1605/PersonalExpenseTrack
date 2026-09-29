@@ -14,7 +14,12 @@
         @if (!cameraEnabled) {
           <span class="tile-overlay">Camera off</span>
         }
-        <span class="tile-label">You</span>
+        <span class="tile-label">
+          {{ selfLabel }}
+          @if (isHost) {
+            <span class="host-badge">Host</span>
+          }
+        </span>
         @if (!micEnabled) {
           <span class="mic-badge" title="Your microphone is off" aria-label="Your microphone is off">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
@@ -34,7 +39,12 @@
             Waiting to join&hellip;
           </span>
         }
-        <span class="tile-label">Them</span>
+        <span class="tile-label">
+          {{ remoteLabel }}
+          @if (remoteIsHost) {
+            <span class="host-badge">Host</span>
+          }
+        </span>
         @if (remoteMicKnown && remoteMuted) {
           <span class="mic-badge" title="Their microphone is off" aria-label="Their microphone is off">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
@@ -239,18 +249,23 @@
 
       <div class="messages" #messageList>
         @for (msg of chatMessages; track $index) {
-          @if (msg.kind === 'sticker') {
-            <img
-              class="sticker-message"
-              [class.mine]="msg.fromMe"
-              [src]="stickerUrl(msg.stickerId)"
-              [alt]="msg.label"
-              width="72"
-              height="72"
-            />
-          } @else {
-            <p class="message" [class.mine]="msg.fromMe">{{ msg.text }}</p>
-          }
+          <div class="msg-row" [class.mine]="msg.fromMe">
+            @if (isHostMessage(msg)) {
+              <span class="host-tag">Host</span>
+            }
+
+            @if (msg.kind === 'sticker') {
+              <img
+                class="sticker-message"
+                [src]="stickerUrl(msg.stickerId)"
+                [alt]="msg.label"
+                width="72"
+                height="72"
+              />
+            } @else {
+              <p class="message" [class.mine]="msg.fromMe">{{ msg.text }}</p>
+            }
+          </div>
         } @empty {
           <p class="chat-empty">Messages can only be seen by people in the call.</p>
         }

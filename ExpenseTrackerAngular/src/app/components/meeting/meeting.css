@@ -229,3 +229,31 @@
 .btn-text.copied {
   color: var(--success);
 }
+
+.name-label {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 550;
+}
+
+.name-field {
+  width: 100%;
+  max-width: 260px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.name-field::placeholder {
+  color: var(--text-muted);
+}
+
+.name-field:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.12);
+}

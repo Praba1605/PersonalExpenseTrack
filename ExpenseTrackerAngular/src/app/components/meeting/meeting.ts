@@ -13,6 +13,9 @@ import { PeerSessionService } from '../../services/peer-session.service';
 import { copyToClipboard } from '../../utils/clipboard';
 import { CALL_MEDIA_CONSTRAINTS } from '../../utils/media';
 
+/** Where the chosen name is kept between visits. */
+const NAME_KEY = 'expensetracker.displayName';
+
 type MeetingState = 'landing' | 'creating' | 'preview' | 'in-call' | 'full' | 'ended' | 'error';
 type Role = 'host' | 'guest';
 
@@ -30,6 +33,7 @@ export class Meeting implements OnInit, OnDestroy {
   role: Role = 'host';
   roomCode = '';
   joinInput = '';
+  displayName = '';
   error = '';
   joinError = '';
   linkCopied = false;
@@ -45,6 +49,8 @@ export class Meeting implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.displayName = this.readStoredName();
+
     const code = this.peerSession.normalizeRoomCode(this.joinCode);
     if (code) {
       this.roomCode = code;
@@ -123,7 +129,18 @@ export class Meeting implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  get canJoin(): boolean {
+    return this.displayName.trim().length > 0;
+  }
+
   joinNow(): void {
+    if (!this.canJoin) {
+      return;
+    }
+
+    this.displayName = this.displayName.trim();
+    this.rememberName(this.displayName);
+
     // Release the preview camera before the call screen opens its own.
     this.stopPreview();
     this.state = 'in-call';
@@ -183,6 +200,23 @@ export class Meeting implements OnInit, OnDestroy {
     this.linkCopied = false;
     this.connectedNow = false;
     this.cdr.markForCheck();
+  }
+
+  /** localStorage throws in private mode and can be blocked outright. */
+  private readStoredName(): string {
+    try {
+      return localStorage.getItem(NAME_KEY) ?? '';
+    } catch {
+      return '';
+    }
+  }
+
+  private rememberName(name: string): void {
+    try {
+      localStorage.setItem(NAME_KEY, name);
+    } catch {
+      // Not remembering the name is not worth interrupting the join for.
+    }
   }
 
   private stopPreview(): void {

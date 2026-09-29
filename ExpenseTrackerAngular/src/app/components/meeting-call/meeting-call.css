@@ -588,3 +588,41 @@
   margin: 0.3rem 0.4rem;
   background: var(--meet-line);
 }
+
+/* ---------- host labelling ---------- */
+
+.host-badge {
+  margin-left: 0.3rem;
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+  background: var(--meet-blue);
+  color: #202124;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Alignment moved here from the bubble so the tag travels with it. */
+.msg-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  max-width: 85%;
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.msg-row.mine {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.host-tag {
+  padding: 0 0.15rem;
+  color: var(--meet-blue);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}

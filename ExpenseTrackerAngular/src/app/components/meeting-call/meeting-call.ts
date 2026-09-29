@@ -24,4 +24,24 @@ export class MeetingCall extends VideoCall {
   constructor(cdr: ChangeDetectorRef, peerSession: PeerSessionService, emojiService: EmojiService) {
     super(cdr, peerSession, emojiService);
   }
+
+  /** As a guest, the only other person in the room is the host who made it. */
+  get remoteIsHost(): boolean {
+    return this.mode === 'meeting-guest';
+  }
+
+  /** Falls back to the old wording if no name was supplied. */
+  get selfLabel(): string {
+    return this.displayName || 'You';
+  }
+
+  /** '' until their name frame arrives, so the tile is never blank. */
+  get remoteLabel(): string {
+    return this.remoteName || 'Them';
+  }
+
+  /** Presentation only -- who sent a message is already known, this just says so. */
+  isHostMessage(message: { fromMe: boolean }): boolean {
+    return message.fromMe ? this.isHost : this.remoteIsHost;
+  }
 }
