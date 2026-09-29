@@ -1,18 +1,56 @@
 # Personal Expense Tracker
 
-A basic full-stack app for tracking personal expenses: add, view, edit, and
-delete expenses, with a monthly total.
+A full-stack app for tracking personal expenses — add, view, edit and delete
+them with per-month totals and filtering — plus a built-in two-person video
+meeting with chat, emoji, and host microphone controls.
 
 ## Tech Stack
 
-| Layer     | Technology                                      |
-|-----------|--------------------------------------------------|
+| Layer     | Technology                                         |
+|-----------|----------------------------------------------------|
 | Frontend  | Angular 22 (standalone components, reactive forms) |
-| Backend   | ASP.NET Core Web API (.NET 10)                   |
-| ORM       | Entity Framework Core (Code First + Migrations)  |
-| Database  | SQL Server (accessed/inspected via SSMS)         |
+| Backend   | ASP.NET Core Web API (.NET 10)                     |
+| ORM       | Entity Framework Core (Code First + Migrations)    |
+| Database  | SQL Server (accessed/inspected via SSMS)           |
+| Video/chat| PeerJS over WebRTC (public broker, peer-to-peer)   |
 
 Fixed categories: `Food`, `Travel`, `Bills`, `Shopping`, `Other`
+
+## Features
+
+### Expenses tab
+
+- Add and edit in a dialog opened from **+ Add Expense**, closing on X, Cancel,
+  Esc, a backdrop click, or a successful save. Full screen on a phone.
+- A month dropdown listing **All months** plus every month that has expenses,
+  with the total and count for the chosen period.
+- Per-column filters for **Date** and **Category**, tucked behind a funnel icon
+  in the column header. The funnel stays highlighted while a filter is set, so
+  a collapsed filter can never hide rows silently.
+- Coloured category badges, right-aligned amounts, row hover, and icon buttons
+  for edit and delete. Deleting asks for confirmation in the row first.
+- The list re-fetches every 5 seconds in the background, so a change made
+  elsewhere (another tab, another device hitting the same API) shows up without
+  a reload. That poll deliberately does not touch the loading or error state —
+  it would otherwise blank the table every few seconds, and one missed request
+  is not worth interrupting the view for.
+
+### Meeting tab
+
+- **New meeting** reserves a Google Meet style code (`xxx-xxxx-xxx`) and gives
+  you a link to share. **Enter a code or link** joins an existing one.
+- A pre-join screen shows your camera and asks for your name, which is
+  remembered in `localStorage` for next time.
+- Two equal video tiles side by side at every screen size, each labelled with
+  the person's name and a grey **Host** badge on whoever created the room.
+- Mic, camera, screen share, chat and leave in a floating control bar.
+- Chat over the WebRTC data channel, with a 56-emoji picker. Emoji travel as
+  Twemoji codepoint ids, never URLs, so a peer cannot point an `<img>` at an
+  arbitrary address.
+- Microphone controls: mute/unmute yourself, and as host mute or unmute the
+  participant, or everyone. Mic state syncs to both tiles in real time. Only a
+  guest acts on host commands, so a participant cannot mute the host.
+- A room seats two; a third person is told the meeting is full.
 
 ## Project Structure
 
@@ -31,11 +69,38 @@ PersonalExpenseTracker/
     └── src/app/
         ├── models/expense.model.ts         # Shared Expense interface + category list
         ├── services/expense.service.ts     # All HTTP calls to the API
+        ├── services/peer-session.service.ts# The single PeerJS connection, room codes, links
+        ├── services/emoji.service.ts       # The emoji set and codepoint validation
+        ├── utils/                          # clipboard, camera constraints
         ├── validators/                     # notFutureDateValidator
-        ├── components/expense-form/        # Add/Edit form
-        ├── components/expense-list/        # Table + edit/delete actions
-        └── components/expense-summary/     # Monthly total
+        ├── components/expense-form/        # Add/Edit form (shown in a dialog)
+        ├── components/expense-list/        # Table, column filters, row actions
+        ├── components/expense-summary/     # Month filter + total
+        ├── components/meeting/             # Landing, join box, pre-join preview
+        ├── components/meeting-call/        # Meet-style call screen (extends VideoCall)
+        └── components/video-call/          # Call engine: media, chat, mic, screen share
 ```
+
+`MeetingCall` extends `VideoCall` with only a different template and styles, so
+the media, chat and microphone logic exists in one place.
+
+## Routes
+
+| Route             | Purpose                                                    |
+|-------------------|------------------------------------------------------------|
+| `/`               | The app (Expenses and Meeting tabs)                        |
+| `/meeting/:code`  | Join a meeting by its shared code                          |
+| `/call/:peerId`   | The original direct-call screen                            |
+
+Both link routes read their parameter on load and then clear it from the
+address bar, so a refresh does not redial an ended call.
+
+`/call/:peerId` still works, but the header button that used to create those
+links has been removed — the Meeting tab is the supported way to start a call.
+
+> **Production note:** these are client-side routes with no server rendering.
+> `ng serve` falls back to `index.html`, but a static host will return 404 for
+> `/meeting/...` unless you add a rewrite to `index.html`.
 
 ## Prerequisites
 
@@ -78,10 +143,27 @@ npm start
 
 Run the backend first (or at least before adding/viewing expenses) — the
 Angular app expects the API to already be reachable at `http://localhost:5158`
-(configured in `src/environments/environment.ts`).
+(configured in `src/environments/environment.development.ts`).
 
 CORS is configured in `Program.cs` to allow only `http://localhost:4200` (the
 Angular dev server) to call the API from the browser.
+
+## Video calling notes
+
+- **A secure context is required.** `getUserMedia` only works over HTTPS or on
+  `localhost`. Opening the app at a plain-http LAN address such as
+  `http://192.168.1.5:4200` loads the Expenses page fine, but the browser will
+  refuse the camera and microphone. To test on a phone over USB, use
+  `adb reverse tcp:4200 tcp:4200 && adb reverse tcp:5158 tcp:5158` — the phone
+  then sees the app as `localhost`, which counts as secure.
+- **Screen sharing is desktop only.** Chrome and Safari on mobile do not
+  implement `getDisplayMedia`, so the control is disabled there.
+- **Signalling uses PeerJS's free public broker.** Media and chat are
+  peer-to-peer; no audio, video or message passes through the API. Two peers
+  behind strict NATs may fail to connect if a TURN relay is unreachable.
+- Meeting codes register with the broker under an `etmeet-` prefix so they
+  cannot collide with the random ids `/call/` links use. The prefix is internal
+  and never shown.
 
 ## API Endpoints
 
@@ -96,6 +178,8 @@ Angular dev server) to call the API from the browser.
 Validation rules (enforced on both backend and frontend): `Title` required
 (max 100 chars), `Amount` required and greater than 0, `Category` required
 and one of the fixed list, `Date` required and cannot be in the future.
+
+The meeting features use no API endpoints — they run entirely in the browser.
 
 ## How Data Flows: Angular → .NET Web API → EF Core → SQL Server
 
@@ -119,4 +203,4 @@ and one of the fixed list, `Date` required and cannot be in the future.
 - [Expense Request Flow](https://claude.ai/code/artifact/103d6b4e-8ba9-40f1-97d9-c008173543f3) — diagrams of how a request crosses from Angular to SQL Server and back, and the full create-expense decision path including both validation gates.
 
 Both are static references (no live data) and won't reflect changes unless
-manually republished.
+manually republished. They cover the API only, which is unchanged.
