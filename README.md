@@ -44,12 +44,15 @@ Fixed categories: `Food`, `Travel`, `Bills`, `Shopping`, `Other`
 - Two equal video tiles side by side at every screen size, each labelled with
   the person's name and a grey **Host** badge on whoever created the room.
 - Mic, camera, screen share, chat and leave in a floating control bar.
-- Chat over the WebRTC data channel, with a 56-emoji picker. Emoji travel as
-  Twemoji codepoint ids, never URLs, so a peer cannot point an `<img>` at an
-  arbitrary address.
-- Microphone controls: mute/unmute yourself, and as host mute or unmute the
-  participant, or everyone. Mic state syncs to both tiles in real time. Only a
-  guest acts on host commands, so a participant cannot mute the host.
+- Chat opens as a side panel from the control bar and carries an unread count
+  on the chat button while it is closed. It runs over the WebRTC data channel,
+  with a 56-emoji picker. Emoji travel as Twemoji codepoint ids, never URLs, so
+  a peer cannot point an `<img>` at an arbitrary address.
+- Microphone controls: mute and unmute yourself from the mic button. The host
+  additionally gets a **⋮ menu** in the control bar with *Mute participant*,
+  *Unmute participant*, *Mute all* and *Unmute all*. Mic state syncs to both
+  tiles in real time, and only a guest acts on host commands, so a participant
+  cannot mute the host.
 - A room seats two; a third person is told the meeting is full.
 
 ## Project Structure
@@ -111,6 +114,10 @@ links has been removed — the Meeting tab is the supported way to start a call.
 - `dotnet-ef` tool (`dotnet tool install --global dotnet-ef`)
 
 ## Setup & Running
+
+Both servers are also described in `.claude/launch.json` (`api` and `angular`),
+so an editor or agent that reads that file can start them without running the
+commands below by hand.
 
 ### 1. Backend (ExpenseTrackerApi)
 
