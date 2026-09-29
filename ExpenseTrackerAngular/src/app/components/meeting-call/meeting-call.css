@@ -595,12 +595,11 @@
   margin-left: 0.3rem;
   padding: 0.05rem 0.3rem;
   border-radius: 4px;
-  background: var(--meet-blue);
-  color: #202124;
+  background: var(--meet-line);
+  color: var(--meet-text);
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  text-transform: uppercase;
 }
 
 /* Alignment moved here from the bubble so the tag travels with it. */
