@@ -69,21 +69,25 @@ PersonalExpenseTracker/
 │   ├── Program.cs                          # App startup: DbContext, OpenAPI, CORS, static files
 │   ├── wwwroot/dashboard.html              # Spending charts, served by the API
 │   ├── wwwroot/api-tester.html             # Manual endpoint tester
+│   ├── ExpenseTracker.postman_collection.json  # Importable request collection
+│   ├── Properties/launchSettings.json      # http / https launch profiles
 │   └── appsettings.json                    # SQL Server connection string
 └── ExpenseTrackerAngular/
-    └── src/app/
-        ├── models/expense.model.ts         # Shared Expense interface + category list
-        ├── services/expense.service.ts     # All HTTP calls to the API
-        ├── services/peer-session.service.ts# The single PeerJS connection, room codes, links
-        ├── services/emoji.service.ts       # The emoji set and codepoint validation
-        ├── utils/                          # clipboard, camera constraints
-        ├── validators/                     # notFutureDateValidator
-        ├── components/expense-form/        # Add/Edit form (shown in a dialog)
-        ├── components/expense-list/        # Table, column filters, row actions
-        ├── components/expense-summary/     # Month filter + total
-        ├── components/meeting/             # Landing, join box, pre-join preview
-        ├── components/meeting-call/        # Meet-style call screen (extends VideoCall)
-        └── components/video-call/          # Call engine: media, chat, mic, screen share
+    └── src/
+        ├── styles.css                      # Global design tokens (colours, radii, shadows)
+        └── app/
+            ├── models/expense.model.ts         # Shared Expense interface + category list
+            ├── services/expense.service.ts     # All HTTP calls to the API
+            ├── services/peer-session.service.ts# The single PeerJS connection, room codes, links
+            ├── services/emoji.service.ts       # The emoji set and codepoint validation
+            ├── utils/                          # clipboard, camera constraints
+            ├── validators/                     # notFutureDateValidator
+            ├── components/expense-form/        # Add/Edit form (shown in a dialog)
+            ├── components/expense-list/        # Table, column filters, row actions
+            ├── components/expense-summary/     # Month filter + total
+            ├── components/meeting/             # Landing, join box, pre-join preview
+            ├── components/meeting-call/        # Meet-style call screen (extends VideoCall)
+            └── components/video-call/          # Call engine: media, chat, mic, screen share
 ```
 
 `MeetingCall` extends `VideoCall` with only a different template and styles, so
@@ -139,6 +143,12 @@ dotnet run
 - API: `http://localhost:5158/api/expenses`
 - OpenAPI document (dev only): `http://localhost:5158/openapi/v1.json`
 
+`Properties/launchSettings.json` holds two profiles. `dotnet run` uses the
+first, **http**, which binds `http://0.0.0.0:5158` — that is why the API is
+reachable from another device on the network, not just from this machine.
+A second **https** profile (`https://localhost:7022`) is available with
+`dotnet run --launch-profile https`.
+
 ### 2. Frontend (ExpenseTrackerAngular)
 
 From `ExpenseTrackerAngular/`:
@@ -150,9 +160,23 @@ npm start
 
 - App: `http://localhost:4200`
 
+### 3. Tests
+
+From `ExpenseTrackerAngular/`:
+
+```bash
+npm test
+```
+
+Runs the Angular unit tests (`ng test`, on Vitest). There is one spec today,
+`src/app/app.spec.ts`, covering that the root component builds and renders its
+title. The .NET side has no test project.
+
 Run the backend first (or at least before adding/viewing expenses) — the
 Angular app expects the API to already be reachable at `http://localhost:5158`
-(configured in `src/environments/environment.development.ts`).
+(configured in `src/environments/environment.development.ts`; its production
+counterpart is `src/environments/environment.ts`, which the default `ng build`
+uses).
 
 CORS is configured in `Program.cs` to allow only `http://localhost:4200` (the
 Angular dev server) to call the API from the browser.
@@ -211,6 +235,14 @@ Both are plain HTML with no build step, and are independent of the Angular
 app — they talk to the API directly from the same origin, so CORS does not
 apply to them.
 
+### Request collections
+
+- `ExpenseTrackerApi/ExpenseTracker.postman_collection.json` — import into
+  Postman for all five endpoints, including the `category` and `month` filters
+  and a deliberately invalid create that should come back `400`.
+- `ExpenseTrackerApi/ExpenseTrackerApi.http` — the same requests for VS Code's
+  REST client or Visual Studio, runnable one at a time from the editor.
+
 ## How Data Flows: Angular → .NET Web API → EF Core → SQL Server
 
 1. **Angular (browser)** — A component calls a method on `ExpenseService`,
@@ -226,6 +258,20 @@ apply to them.
 5. The result flows back up the same path: SQL Server → EF Core → the
    controller (maps to a response DTO, returns an HTTP status code) →
    Angular's `HttpClient` → the component updates its state.
+
+## Conventions
+
+`.claude/skills/` holds the coding conventions this project follows, as two
+skill files that an agent picks up automatically and a person can read
+directly:
+
+- `expense-tracker-api-pattern` — every endpoint validates with DataAnnotations,
+  never exposes the EF entity (DTOs in and out), wraps database calls in
+  try/catch with a non-technical message, and uses consistent status codes.
+- `expense-tracker-angular-pattern` — three files per component, all HTTP
+  through a service rather than a component, every call handling loading,
+  success and error, no `any` for expense data, and the API base URL only ever
+  read from the environment file.
 
 ## Reference Artifacts
 

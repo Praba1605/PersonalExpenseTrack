@@ -1,6 +1,62 @@
 @ExpenseTrackerApi_HostAddress = http://localhost:5158
 
-GET {{ExpenseTrackerApi_HostAddress}}/weatherforecast/
+### List all expenses
+GET {{ExpenseTrackerApi_HostAddress}}/api/expenses
 Accept: application/json
 
-###
+### List expenses in one category
+GET {{ExpenseTrackerApi_HostAddress}}/api/expenses?category=Food
+Accept: application/json
+
+### List expenses in one month (yyyy-MM)
+GET {{ExpenseTrackerApi_HostAddress}}/api/expenses?month=2026-09
+Accept: application/json
+
+### Get one expense by id
+# Change the id to one that exists, or this returns 404.
+GET {{ExpenseTrackerApi_HostAddress}}/api/expenses/1
+Accept: application/json
+
+### Create an expense
+# Category must be one of Food, Travel, Bills, Shopping, Other.
+# Date is yyyy-MM-dd and cannot be in the future.
+POST {{ExpenseTrackerApi_HostAddress}}/api/expenses
+Content-Type: application/json
+
+{
+  "title": "Coffee with friends",
+  "amount": 9.50,
+  "category": "Food",
+  "date": "2026-09-06"
+}
+
+### Create an expense - invalid, expects 400
+# Empty title, amount not greater than zero, category off the list.
+POST {{ExpenseTrackerApi_HostAddress}}/api/expenses
+Content-Type: application/json
+
+{
+  "title": "",
+  "amount": 0,
+  "category": "Groceries",
+  "date": "2026-09-06"
+}
+
+### Update an expense
+# Replaces every field, so send them all.
+PUT {{ExpenseTrackerApi_HostAddress}}/api/expenses/1
+Content-Type: application/json
+
+{
+  "title": "Coffee with friends",
+  "amount": 12.75,
+  "category": "Food",
+  "date": "2026-09-06"
+}
+
+### Delete an expense
+DELETE {{ExpenseTrackerApi_HostAddress}}/api/expenses/1
+
+### OpenAPI document (development only)
+GET {{ExpenseTrackerApi_HostAddress}}/openapi/v1.json
+Accept: application/json
