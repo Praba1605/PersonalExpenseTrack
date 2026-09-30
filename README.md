@@ -66,7 +66,9 @@ PersonalExpenseTracker/
 │   ├── Validation/                         # AllowedCategoriesAttribute, NotFutureDateAttribute
 │   ├── Data/AppDbContext.cs                # EF Core database context
 │   ├── Migrations/                         # EF Core migration history
-│   ├── Program.cs                          # App startup: DbContext, OpenAPI, CORS
+│   ├── Program.cs                          # App startup: DbContext, OpenAPI, CORS, static files
+│   ├── wwwroot/dashboard.html              # Spending charts, served by the API
+│   ├── wwwroot/api-tester.html             # Manual endpoint tester
 │   └── appsettings.json                    # SQL Server connection string
 └── ExpenseTrackerAngular/
     └── src/app/
@@ -187,6 +189,27 @@ Validation rules (enforced on both backend and frontend): `Title` required
 and one of the fixed list, `Date` required and cannot be in the future.
 
 The meeting features use no API endpoints — they run entirely in the browser.
+
+## Built-in pages served by the API
+
+`Program.cs` enables static files, so two standalone pages ship with the
+backend and need no Angular build. Start the API and open them directly:
+
+| Page                                        | What it is                                     |
+|---------------------------------------------|------------------------------------------------|
+| `http://localhost:5158/dashboard.html`      | **Spending Dashboard** — spending by category and by month |
+| `http://localhost:5158/api-tester.html`     | **API Tester** — exercise all five endpoints by hand |
+
+- The dashboard draws bar and line charts with Chart.js (loaded from a CDN, so
+  it needs a network connection) and re-reads `/api/expenses` every 3 seconds,
+  which is what the "Live" indicator refers to.
+- The API tester issues GET, POST, PUT and DELETE against `/api/expenses` and
+  keeps a history of the calls you have made. It writes to the same database as
+  the app, so anything created or deleted there is real.
+
+Both are plain HTML with no build step, and are independent of the Angular
+app — they talk to the API directly from the same origin, so CORS does not
+apply to them.
 
 ## How Data Flows: Angular → .NET Web API → EF Core → SQL Server
 
